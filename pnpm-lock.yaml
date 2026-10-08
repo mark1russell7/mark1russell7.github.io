@@ -171,7 +171,7 @@ importers:
         version: https://codeload.github.com/mark1russell7/cue/tar.gz/fb96d136d5c451b7ee4f16e50b756b855e7320ab
       '@mark1russell7/ste-lint':
         specifier: github:mark1russell7/ste-lint
-        version: https://codeload.github.com/mark1russell7/ste-lint/tar.gz/35b615950ac8d60a70d0b0afd73a4765e6c80b92
+        version: https://codeload.github.com/mark1russell7/ste-lint/tar.gz/f597d6c1e09bcfcb487bb575825d6d5f29e9e0c7
       tsx:
         specifier: ^4.23.15
         version: 4.23.15
@@ -414,8 +414,8 @@ packages:
     engines: {node: '>=25.0.0', npm: '>=11.0.0'}
     hasBin: true
 
-  '@mark1russell7/ste-lint@https://codeload.github.com/mark1russell7/ste-lint/tar.gz/35b615950ac8d60a70d0b0afd73a4765e6c80b92':
-    resolution: {gitHosted: true, integrity: sha512-t8CETVZRbxTF5JR0s6H/geCrR/C2zCyLBrn8XbbuCQljA70hBMWsL6nh3haygknOXzGlNGhxst0s86OpaTl2Gg==, tarball: https://codeload.github.com/mark1russell7/ste-lint/tar.gz/35b615950ac8d60a70d0b0afd73a4765e6c80b92}
+  '@mark1russell7/ste-lint@https://codeload.github.com/mark1russell7/ste-lint/tar.gz/f597d6c1e09bcfcb487bb575825d6d5f29e9e0c7':
+    resolution: {gitHosted: true, integrity: sha512-HDxumpWNUeciZKaXbAGFPyoOTrt0trj7L3/koNvWnTN/vEuF0gYzqVJdsgfTQ9bE/DhSxfNMRxtrh4KYnbbimA==, tarball: https://codeload.github.com/mark1russell7/ste-lint/tar.gz/f597d6c1e09bcfcb487bb575825d6d5f29e9e0c7}
     version: 0.1.0
     engines: {node: '>=22'}
     hasBin: true
@@ -1091,7 +1091,7 @@ snapshots:
 
   '@mark1russell7/cue@https://codeload.github.com/mark1russell7/cue/tar.gz/fb96d136d5c451b7ee4f16e50b756b855e7320ab': {}
 
-  '@mark1russell7/ste-lint@https://codeload.github.com/mark1russell7/ste-lint/tar.gz/35b615950ac8d60a70d0b0afd73a4765e6c80b92':
+  '@mark1russell7/ste-lint@https://codeload.github.com/mark1russell7/ste-lint/tar.gz/f597d6c1e09bcfcb487bb575825d6d5f29e9e0c7':
     dependencies:
       typescript: 6.0.3
 
