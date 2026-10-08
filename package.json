@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/package",
+  "name": "portfolio-monorepo",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.10.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @portfolio/site dev",
+    "build": "pnpm -r run build",
+    "package": "tsx packages/cli/src/index.ts package",
+    "template": "tsx packages/cli/src/index.ts repo",
+    "test": "pnpm -r run test",
+    "typecheck": "pnpm -r run typecheck"
+  },
+  "devDependencies": {
+    "@mark1russell7/cue": "github:mark1russell7/cue",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
