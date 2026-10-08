@@ -27,3 +27,5 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      # The writing rules (ASD-STE100) of the README files, the doc comments and the text of the site
+      - run: pnpm lint:ste
