@@ -114,7 +114,7 @@ export function SiteCaption({ site, scale = 1 }: { site: Site; scale?: number })
   return (
     <div className="caption" style={{ height: CAPTION_HEIGHT * scale, "--cs": scale } as CSSProperties}>
       <strong>{site.name}</strong>
-      <span>{site.blurb}</span>
+      <span>{site.tagline}</span>
     </div>
   );
 }

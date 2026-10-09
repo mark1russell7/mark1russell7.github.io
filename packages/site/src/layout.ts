@@ -16,7 +16,10 @@ export function plateSize(item: Item): { w: number; h: number } {
     const w = item.tier === 1 ? 420 : 300;
     return { w, h: Math.round((w * FRAME_HEIGHT) / FRAME_WIDTH + CAPTION_HEIGHT) };
   }
-  if (item.kind === "pebble") return { w: Math.max(176, Math.round(item.name.length * 8.4 + 72)), h: 58 };
+  if (item.kind === "pebble") {
+    // The pebble is wide enough for its name (13 px, bold) and for its line of text (11 px).
+    return { w: Math.round(Math.max(176, item.name.length * 8.4 + 72, item.blurb.length * 6.3 + 66)), h: 58 };
+  }
   switch (item.id) {
     case "me":
       return { w: 340, h: 300 };

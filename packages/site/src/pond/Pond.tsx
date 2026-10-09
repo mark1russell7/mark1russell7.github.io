@@ -27,7 +27,7 @@ const homes: Record<string, [number, number]> = {
   template: [0.98, 0.42],
 };
 
-/** The order of the cards in the column of the phone layout. The pebbles follow in two columns. */
+/** The order of the cards in the column of the phone layout. The pebbles follow. */
 const phoneOrder = ["me", "vex", "async-browser-context", "lag", "client", "render", "systems", "page-lifecycle-tracker", "proof", "now", "meter"];
 
 /** A box of the layout, with the scale of its card from the base size. */
@@ -85,15 +85,12 @@ function phoneLayout(width: number): Plan {
     boxes.push({ id, item, k, x: width / 2, y: y + h / 2, w: column, h });
     y += h + gap;
   }
-  const small = (column - 12) / 2;
-  items
-    .filter((item) => item.kind === "pebble")
-    .forEach((item, index) => {
-      if (index % 2 === 0 && index > 0) y += 58 + 12;
-      const x = margin + (index % 2) * (small + 12) + small / 2;
-      boxes.push({ id: item.id, item, k: 1, x, y: y + 29, w: small, h: 58 });
-    });
-  return { boxes, height: y + 58 + margin + 40, phone: true };
+  for (const item of items) {
+    if (item.kind !== "pebble") continue;
+    boxes.push({ id: item.id, item, k: 1, x: width / 2, y: y + 29, w: column, h: 58 });
+    y += 58 + 12;
+  }
+  return { boxes, height: y + margin + 40, phone: true };
 }
 
 /**

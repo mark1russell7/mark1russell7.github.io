@@ -5,6 +5,9 @@ export interface Site {
   readonly name: string;
   /** The path of the site under this domain, with the slash at the end. */
   readonly path: string;
+  /** One short line for the caption of the card. */
+  readonly tagline: string;
+  /** The full description. The panel of an open site, the label for screen readers and the data for search engines use it. */
   readonly blurb: string;
   readonly hue: string;
   /** Tier 1 is a featured project. The pool shows it larger. */
@@ -44,6 +47,7 @@ export const sites: readonly Site[] = [
     id: "vex",
     name: "Vex",
     path: "/vex/",
+    tagline: "Typed spreadsheet formulas over TS objects",
     blurb: "Typed spreadsheet formulas over TypeScript objects. When a value is missing, Vex tells you why.",
     hue: "#5B86FF",
     tier: 1,
@@ -55,6 +59,7 @@ export const sites: readonly Site[] = [
     id: "async-browser-context",
     name: "async-browser-context",
     path: "/AsyncBrowserContext/",
+    tagline: "AsyncLocalStorage for the browser",
     blurb: "AsyncLocalStorage for the browser. The context stays through await, timers, events and generators.",
     hue: "#2CC9B5",
     tier: 1,
@@ -67,6 +72,7 @@ export const sites: readonly Site[] = [
     id: "lag",
     name: "lag",
     path: "/lag/",
+    tagline: "Main-thread lag as OTel metrics",
     blurb: "It measures how long the main thread makes users wait, and exports the result as OpenTelemetry metrics.",
     hue: "#F2AA3C",
     tier: 2,
@@ -77,6 +83,7 @@ export const sites: readonly Site[] = [
     id: "client",
     name: "client",
     path: "/client/",
+    tagline: "Procedures as data",
     blurb: "Procedures as data. One typed registry for the CLI, HTTP, WebSocket and the MCP tools of Claude.",
     hue: "#A78CFF",
     tier: 2,
@@ -87,6 +94,7 @@ export const sites: readonly Site[] = [
     id: "render",
     name: "render",
     path: "/render/",
+    tagline: "A reactive engine that edits itself",
     blurb: "A reactive expression engine. Its interface shows its own expressions, and you can edit them.",
     hue: "#FF7C6C",
     tier: 2,
@@ -98,6 +106,7 @@ export const sites: readonly Site[] = [
     id: "systems",
     name: "systems",
     path: "/systems/",
+    tagline: "Time to detect a dead peer",
     blurb: "How long until a client knows that its peer is gone. An algebra calculates the time, and a harness measures it.",
     hue: "#93D86C",
     tier: 2,
@@ -109,6 +118,7 @@ export const sites: readonly Site[] = [
     id: "page-lifecycle-tracker",
     name: "page-lifecycle-tracker",
     path: "/page-lifecycle-tracker/",
+    tagline: "Page Lifecycle state for telemetry",
     blurb: "The Page Lifecycle state of a web page, from active to frozen, for monitoring and telemetry libraries.",
     hue: "#EE7BD0",
     tier: 2,
@@ -124,11 +134,11 @@ export const tiles: readonly Tile[] = [
 ];
 
 export const pebbles: readonly Pebble[] = [
-  { kind: "pebble", id: "ste-lint", name: "ste-lint", blurb: "A linter for Simplified Technical English", hue: "#A78CFF", href: `${github}/ste-lint` },
-  { kind: "pebble", id: "optional", name: "optional", blurb: "Some or none, with the monad laws as tests", hue: "#5B86FF", href: `${github}/optional` },
-  { kind: "pebble", id: "cue", name: "cue", blurb: "Shared CUE schemas for TypeScript configuration", hue: "#93D86C", href: `${github}/cue` },
-  { kind: "pebble", id: "otel-ts", name: "otel-ts", blurb: "OpenTelemetry and Grafana Faro with one call", hue: "#F2AA3C", href: `${github}/otel-ts` },
-  { kind: "pebble", id: "template", name: "template", blurb: "The pnpm workspace of these repositories", hue: "#FF7C6C", href: `${github}/template` },
+  { kind: "pebble", id: "ste-lint", name: "ste-lint", blurb: "A linter for technical prose", hue: "#A78CFF", href: `${github}/ste-lint` },
+  { kind: "pebble", id: "optional", name: "optional", blurb: "Some or none, law-tested", hue: "#5B86FF", href: `${github}/optional` },
+  { kind: "pebble", id: "cue", name: "cue", blurb: "Shared TS config schemas", hue: "#93D86C", href: `${github}/cue` },
+  { kind: "pebble", id: "otel-ts", name: "otel-ts", blurb: "OpenTelemetry in one call", hue: "#F2AA3C", href: `${github}/otel-ts` },
+  { kind: "pebble", id: "template", name: "template", blurb: "The workspace template", hue: "#FF7C6C", href: `${github}/template` },
 ];
 
 export const items: readonly Item[] = [...sites, ...tiles, ...pebbles];

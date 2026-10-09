@@ -40,7 +40,7 @@ const desktop: World = {
   phone: false,
 };
 
-/** This function makes the board of a phone: one column of cards, and the pebbles in two columns at the end. */
+/** This function makes the board of a phone: one column of cards, with the pebbles at the end. */
 function phoneWorld(): World {
   const width = 600;
   const gap = 40;
@@ -53,13 +53,12 @@ function phoneWorld(): World {
     places[id] = [0, y, width, h];
     y += h + gap;
   }
-  items
-    .filter((item) => item.kind === "pebble")
-    .forEach((item, index) => {
-      if (index % 2 === 0 && index > 0) y += 96 + 20;
-      places[item.id] = [(index % 2) * 310, y, 290, 96];
-    });
-  return { places, width, height: y + 96, phone: true };
+  for (const item of items) {
+    if (item.kind !== "pebble") continue;
+    places[item.id] = [0, y, width, 96];
+    y += 96 + 20;
+  }
+  return { places, width, height: y, phone: true };
 }
 
 const phone: World = phoneWorld();
