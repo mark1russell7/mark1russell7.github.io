@@ -19,7 +19,7 @@ export interface Site {
 /** A card with facts about the author, not a project. */
 export interface Tile {
   readonly kind: "tile";
-  readonly id: "me" | "proof" | "now" | "craft" | "meter";
+  readonly id: "me" | "proof" | "now" | "meter";
   readonly name: string;
   readonly hue: string;
 }
@@ -104,13 +104,22 @@ export const sites: readonly Site[] = [
     focus: ".sy-frame",
     repo: `${github}/systems`,
   },
+  {
+    kind: "site",
+    id: "page-lifecycle-tracker",
+    name: "page-lifecycle-tracker",
+    path: "/page-lifecycle-tracker/",
+    blurb: "The Page Lifecycle state of a web page, from active to frozen, for monitoring and telemetry libraries.",
+    hue: "#EE7BD0",
+    tier: 2,
+    repo: `${github}/page-lifecycle-tracker`,
+  },
 ];
 
 export const tiles: readonly Tile[] = [
   { kind: "tile", id: "me", name: "Mark Russell", hue: "#E6F0EC" },
   { kind: "tile", id: "proof", name: "The numbers", hue: "#2CC9B5" },
   { kind: "tile", id: "now", name: "Recent work", hue: "#F2AA3C" },
-  { kind: "tile", id: "craft", name: "Plain words", hue: "#A78CFF" },
   { kind: "tile", id: "meter", name: "This page", hue: "#FF7C6C" },
 ];
 
@@ -119,14 +128,6 @@ export const pebbles: readonly Pebble[] = [
   { kind: "pebble", id: "optional", name: "optional", blurb: "Some or none, with the monad laws as tests", hue: "#5B86FF", href: `${github}/optional` },
   { kind: "pebble", id: "cue", name: "cue", blurb: "Shared CUE schemas for TypeScript configuration", hue: "#93D86C", href: `${github}/cue` },
   { kind: "pebble", id: "otel-ts", name: "otel-ts", blurb: "OpenTelemetry and Grafana Faro with one call", hue: "#F2AA3C", href: `${github}/otel-ts` },
-  {
-    kind: "pebble",
-    id: "page-lifecycle-tracker",
-    name: "page-lifecycle-tracker",
-    blurb: "The Page Lifecycle state for telemetry",
-    hue: "#2CC9B5",
-    href: `${github}/page-lifecycle-tracker`,
-  },
   { kind: "pebble", id: "template", name: "template", blurb: "The pnpm workspace of these repositories", hue: "#FF7C6C", href: `${github}/template` },
 ];
 
@@ -139,6 +140,15 @@ export const proof: readonly { readonly value: string; readonly label: string }[
   { value: "155", label: "CLI commands in client" },
   { value: "4", label: "engines in each CI run" },
 ];
+
+/** The text about the author. The "me" tile shows it, and the build writes it into the HTML for search engines. */
+export const bio: { readonly lede: string; readonly body: readonly string[] } = {
+  lede: "I build languages, engines and frameworks for TypeScript.",
+  body: [
+    "Vex is a formula language that tells you why a value is missing. render is an engine whose interface edits its own expressions. client serves one typed registry to a CLI, HTTP, WebSockets and Claude.",
+    "Every project here is live. Open one and use it.",
+  ],
+};
 
 export const links: { readonly github: string; readonly npm: string } = {
   github,

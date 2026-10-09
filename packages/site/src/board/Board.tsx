@@ -1,31 +1,69 @@
-import { type CSSProperties, type MouseEvent, type PointerEvent, type ReactElement, useEffect, useRef, useState } from "react";
+import { type CSSProperties, type MouseEvent, type PointerEvent, type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { PlateCard } from "../cards.tsx";
 import type { ConceptProps } from "../concept.ts";
 import { itemById, items } from "../content.ts";
+import { PHONE_WIDTH } from "../layout.ts";
 import { useLoop, useSize } from "../loop.ts";
 
-/** The place and the size of each item on the board, in world units. */
-const places: Record<string, readonly [number, number, number, number]> = {
-  me: [0, 0, 420, 300],
-  vex: [500, 0, 880, 637],
-  "async-browser-context": [1460, 0, 880, 637],
-  now: [2420, 0, 420, 300],
-  proof: [0, 380, 420, 300],
-  craft: [2420, 380, 420, 228],
-  lag: [20, 717, 640, 487],
-  client: [720, 717, 640, 487],
-  render: [1440, 717, 640, 487],
-  systems: [2160, 717, 640, 487],
-  meter: [0, 1284, 420, 270],
-  "ste-lint": [500, 1284, 360, 96],
-  optional: [888, 1284, 360, 96],
-  cue: [1276, 1284, 360, 96],
-  "otel-ts": [1664, 1284, 360, 96],
-  "page-lifecycle-tracker": [2052, 1284, 400, 96],
-  template: [2480, 1284, 360, 96],
+/** The place and the size of an item on the board, in world units: x, y, width and height. */
+type Place = readonly [number, number, number, number];
+
+interface World {
+  readonly places: Readonly<Record<string, Place>>;
+  readonly width: number;
+  readonly height: number;
+  readonly phone: boolean;
+}
+
+/** The board on a large screen: the featured sites in the middle of the first row, and the other sites in the second row. */
+const desktop: World = {
+  places: {
+    me: [0, 0, 420, 370],
+    vex: [500, 0, 880, 637],
+    "async-browser-context": [1460, 0, 880, 637],
+    now: [2420, 0, 420, 300],
+    meter: [0, 410, 420, 262],
+    proof: [2420, 340, 420, 241],
+    lag: [0, 760, 520, 412],
+    client: [580, 760, 520, 412],
+    render: [1160, 760, 520, 412],
+    systems: [1740, 760, 520, 412],
+    "page-lifecycle-tracker": [2320, 760, 520, 412],
+    "ste-lint": [0, 1252, 536, 96],
+    optional: [576, 1252, 536, 96],
+    cue: [1152, 1252, 536, 96],
+    "otel-ts": [1728, 1252, 536, 96],
+    template: [2304, 1252, 536, 96],
+  },
+  width: 2840,
+  height: 1348,
+  phone: false,
 };
 
-const WORLD = { width: 2840, height: 1554 };
+/** This function makes the board of a phone: one column of cards, and the pebbles in two columns at the end. */
+function phoneWorld(): World {
+  const width = 600;
+  const gap = 40;
+  const heights: Record<string, number> = { me: 529, proof: 344, now: 344, meter: 374 };
+  const order = ["me", "vex", "async-browser-context", "lag", "client", "render", "systems", "page-lifecycle-tracker", "proof", "now", "meter"];
+  const places: Record<string, Place> = {};
+  let y = 0;
+  for (const id of order) {
+    const h = heights[id] ?? 462;
+    places[id] = [0, y, width, h];
+    y += h + gap;
+  }
+  items
+    .filter((item) => item.kind === "pebble")
+    .forEach((item, index) => {
+      if (index % 2 === 0 && index > 0) y += 96 + 20;
+      places[item.id] = [(index % 2) * 310, y, 290, 96];
+    });
+  return { places, width, height: y + 96, phone: true };
+}
+
+const phone: World = phoneWorld();
+
 const MIN_ZOOM = 0.12;
 const MAX_ZOOM = 3;
 const HUD = 64;
@@ -36,8 +74,8 @@ interface Camera {
   z: number;
 }
 
-function placeOf(id: string): readonly [number, number, number, number] {
-  return places[id] ?? [0, 0, 100, 100];
+function placeOf(world: World, id: string): Place {
+  return world.places[id] ?? [0, 0, 100, 100];
 }
 
 /** This function gives the camera that shows the rectangle in the viewport, with a margin. */
@@ -47,8 +85,9 @@ function frame(x: number, y: number, w: number, h: number, width: number, height
 }
 
 /**
- * The board: an infinite canvas with each item at a fixed place. Drag to move the board, and scroll to zoom.
+ * The board: an infinite canvas with each item at a fixed place. Drag to move the board, and scroll or pinch to zoom.
  * When the user selects a site, the camera flies to it, and the site becomes interactive in place.
+ * On a phone, the board is one column, and a site opens in a full-screen panel.
  */
 export function Board({ onOpen, reduced, paused }: ConceptProps): ReactElement {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -56,31 +95,44 @@ export function Board({ onOpen, reduced, paused }: ConceptProps): ReactElement {
   const viewRef = useRef<SVGRectElement>(null);
   const zoomRef = useRef<HTMLSpanElement>(null);
   const { width, height } = useSize(rootRef);
-  const camera = useRef<Camera>({ x: WORLD.width / 2, y: WORLD.height / 2, z: 0.4 });
+  const world = useMemo(() => (width > 0 && width < PHONE_WIDTH ? phone : desktop), [width]);
+  const camera = useRef<Camera>({ x: desktop.width / 2, y: desktop.height / 2, z: 0.4 });
   const target = useRef<Camera>({ ...camera.current });
   const velocity = useRef({ x: 0, y: 0 });
   const pan = useRef<{ x: number; y: number; moved: number; id: number; t: number } | null>(null);
+  /** The pointers on the board. Two pointers make a pinch. */
+  const touches = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ distance: number; x: number; y: number } | null>(null);
   /** The distance of the last drag. A click after a drag does not select a card. */
   const lastMoved = useRef(0);
   const before = useRef<Camera | null>(null);
   const [focused, setFocused] = useState<string | null>(null);
   const [arrived, setArrived] = useState(false);
-  const started = useRef(false);
+  const shown = useRef<World | null>(null);
 
-  const fit = (): Camera => frame(0, 0, WORLD.width, WORLD.height, width, height + HUD, 0.92);
+  /** This function gives the camera for the whole board. On a phone, the camera shows the full width at the top of the column. */
+  const home = (): Camera => {
+    if (world.phone) {
+      const z = (width * 0.92) / world.width;
+      return { x: world.width / 2, y: (height / 2 - 16) / z, z };
+    }
+    // The controls and the map cover the bottom right corner, so the whole board fits in the space above them.
+    const whole = frame(0, 0, world.width, world.height, width, height + HUD - 150, 0.92);
+    return { ...whole, y: whole.y + 75 / whole.z };
+  };
 
-  // The first view: the camera starts near the center and settles back to show the whole board.
+  // The first view: the camera starts near the center and settles back to show the board.
   useEffect(() => {
-    if (width === 0 || started.current) return;
-    started.current = true;
-    const whole = fit();
+    if (width === 0 || shown.current === world) return;
+    shown.current = world;
+    const whole = home();
     target.current = whole;
     camera.current = reduced ? { ...whole } : { x: whole.x + 120, y: whole.y + 60, z: whole.z * 1.35 };
-    // The effect runs one time, when the board has a size.
-  }, [width, height, reduced]);
+    // The effect runs when the board gets a size, and when the layout changes between the phone and the desktop.
+  }, [width, height, reduced, world]);
 
   const focus = (id: string): void => {
-    const [x, y, w, h] = placeOf(id);
+    const [x, y, w, h] = placeOf(world, id);
     if (!focused) before.current = { ...target.current };
     target.current = frame(x, y, w, h, width, height, 0.94);
     velocity.current = { x: 0, y: 0 };
@@ -90,7 +142,7 @@ export function Board({ onOpen, reduced, paused }: ConceptProps): ReactElement {
 
   const unfocus = (): void => {
     if (!focused) return;
-    target.current = before.current ?? fit();
+    target.current = before.current ?? home();
     setFocused(null);
     setArrived(false);
   };
@@ -99,7 +151,7 @@ export function Board({ onOpen, reduced, paused }: ConceptProps): ReactElement {
     if (paused || width === 0) return;
     const cam = camera.current;
     const goal = target.current;
-    if (!pan.current) {
+    if (!pan.current && !pinch.current) {
       goal.x += velocity.current.x * dt;
       goal.y += velocity.current.y * dt;
       const friction = Math.exp(-4 * dt);
@@ -112,8 +164,8 @@ export function Board({ onOpen, reduced, paused }: ConceptProps): ReactElement {
     cam.z *= Math.pow(goal.z / cam.z, k);
     const tx = width / 2 - cam.x * cam.z;
     const ty = height / 2 - cam.y * cam.z;
-    const world = worldRef.current;
-    if (world) world.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(${cam.z.toFixed(5)})`;
+    const plane = worldRef.current;
+    if (plane) plane.style.transform = `translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(${cam.z.toFixed(5)})`;
     const root = rootRef.current;
     if (root) {
       const grid = 48 * cam.z;
@@ -153,6 +205,15 @@ export function Board({ onOpen, reduced, paused }: ConceptProps): ReactElement {
     };
   });
 
+  /** This function zooms the target camera by `factor`, and keeps the world point under the screen point `px`, `py` in place. */
+  const zoomAt = (px: number, py: number, factor: number): void => {
+    const goal = target.current;
+    const z = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, goal.z * factor));
+    const wx = goal.x + px / goal.z;
+    const wy = goal.y + py / goal.z;
+    target.current = { x: wx - px / z, y: wy - py / z, z };
+  };
+
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return undefined;
@@ -160,28 +221,50 @@ export function Board({ onOpen, reduced, paused }: ConceptProps): ReactElement {
       if (event.target instanceof Element && event.target.closest(".board-controls, .board-map")) return;
       event.preventDefault();
       const rect = root.getBoundingClientRect();
-      const px = event.clientX - rect.left - rect.width / 2;
-      const py = event.clientY - rect.top - rect.height / 2;
-      const goal = target.current;
       const delta = event.deltaMode === 1 ? event.deltaY * 16 : event.deltaY;
-      const z = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, goal.z * Math.exp(-delta * (event.ctrlKey ? 0.01 : 0.0016))));
-      const wx = goal.x + px / goal.z;
-      const wy = goal.y + py / goal.z;
-      target.current = { x: wx - px / z, y: wy - py / z, z };
+      zoomAt(event.clientX - rect.left - rect.width / 2, event.clientY - rect.top - rect.height / 2, Math.exp(-delta * (event.ctrlKey ? 0.01 : 0.0016)));
     };
     root.addEventListener("wheel", wheel, { passive: false });
     return () => root.removeEventListener("wheel", wheel);
   }, []);
 
+  const pinchState = (): { distance: number; x: number; y: number } | null => {
+    const [a, b] = [...touches.current.values()];
+    if (!a || !b) return null;
+    return { distance: Math.hypot(a.x - b.x, a.y - b.y), x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  };
+
   const down = (event: PointerEvent<HTMLDivElement>): void => {
     if (event.button !== 0) return;
     if (event.target instanceof Element && event.target.closest(".board-controls, .board-map, .board-hud")) return;
-    pan.current = { x: event.clientX, y: event.clientY, moved: 0, id: event.pointerId, t: performance.now() };
+    touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
     velocity.current = { x: 0, y: 0 };
     target.current = { ...camera.current, z: target.current.z };
+    if (touches.current.size === 2) {
+      pan.current = null;
+      lastMoved.current = 99;
+      pinch.current = pinchState();
+      return;
+    }
+    pan.current = { x: event.clientX, y: event.clientY, moved: 0, id: event.pointerId, t: performance.now() };
   };
 
   const move = (event: PointerEvent<HTMLDivElement>): void => {
+    if (touches.current.has(event.pointerId)) touches.current.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    const previous = pinch.current;
+    if (previous) {
+      const next = pinchState();
+      const rect = rootRef.current?.getBoundingClientRect();
+      if (!next || !rect || previous.distance === 0) return;
+      const z = camera.current.z;
+      camera.current.x -= (next.x - previous.x) / z;
+      camera.current.y -= (next.y - previous.y) / z;
+      target.current = { ...camera.current, z: target.current.z };
+      zoomAt(next.x - rect.left - rect.width / 2, next.y - rect.top - rect.height / 2, next.distance / previous.distance);
+      camera.current = { ...target.current };
+      pinch.current = next;
+      return;
+    }
     const current = pan.current;
     if (!current || current.id !== event.pointerId) return;
     const dx = event.clientX - current.x;
@@ -202,6 +285,11 @@ export function Board({ onOpen, reduced, paused }: ConceptProps): ReactElement {
   };
 
   const up = (event: PointerEvent<HTMLDivElement>): void => {
+    touches.current.delete(event.pointerId);
+    if (pinch.current) {
+      if (touches.current.size < 2) pinch.current = null;
+      return;
+    }
     const current = pan.current;
     if (!current || current.id !== event.pointerId) return;
     pan.current = null;
@@ -214,23 +302,25 @@ export function Board({ onOpen, reduced, paused }: ConceptProps): ReactElement {
 
   const jump = (event: MouseEvent<SVGSVGElement>): void => {
     const rect = event.currentTarget.getBoundingClientRect();
-    const x = ((event.clientX - rect.left) / rect.width) * WORLD.width;
-    const y = ((event.clientY - rect.top) / rect.height) * WORLD.height;
+    const x = ((event.clientX - rect.left) / rect.width) * world.width;
+    const y = ((event.clientY - rect.top) / rect.height) * world.height;
     target.current = { ...target.current, x, y };
-  };
-
-  const zoomBy = (factor: number): void => {
-    const goal = target.current;
-    target.current = { ...goal, z: Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, goal.z * factor)) };
   };
 
   const focusedItem = focused ? itemById(focused) : undefined;
 
   return (
-    <div className="concept board" ref={rootRef} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
+    <div
+      className={world.phone ? "concept board is-phone" : "concept board"}
+      ref={rootRef}
+      onPointerDown={down}
+      onPointerMove={move}
+      onPointerUp={up}
+      onPointerCancel={up}
+    >
       <div className="board-world" ref={worldRef}>
         {items.map((item) => {
-          const [x, y, w, h] = placeOf(item.id);
+          const [x, y, w, h] = placeOf(world, item.id);
           return (
             <PlateCard
               key={item.id}
@@ -241,14 +331,17 @@ export function Board({ onOpen, reduced, paused }: ConceptProps): ReactElement {
               scale={1.5}
               className={focused === item.id ? "board-card is-focused" : "board-card"}
               style={{ transform: `translate(${x}px, ${y}px)` }}
-              onOpen={(id) => {
-                if (!moved()) focus(id);
+              onOpen={(id, element) => {
+                if (moved()) return;
+                // A site at the width of a phone is too small to use in place, so the phone opens it in the panel.
+                if (world.phone) onOpen(id, element);
+                else focus(id);
               }}
               cardRef={(element) => {
                 if (!element) return;
                 element.onfocus = () => {
                   if (!pan.current && focused !== item.id) {
-                    const [fx, fy, fw, fh] = placeOf(item.id);
+                    const [fx, fy, fw, fh] = placeOf(world, item.id);
                     target.current = frame(fx, fy, fw, fh, width, height, 0.7);
                   }
                 };
@@ -279,31 +372,33 @@ export function Board({ onOpen, reduced, paused }: ConceptProps): ReactElement {
       ) : null}
 
       <div className="board-controls">
-        <button type="button" onClick={() => zoomBy(1 / 1.4)} aria-label="Zoom out">
+        <button type="button" onClick={() => zoomAt(0, 0, 1 / 1.4)} aria-label="Zoom out">
           −
         </button>
         <span ref={zoomRef} className="board-zoom" />
-        <button type="button" onClick={() => zoomBy(1.4)} aria-label="Zoom in">
+        <button type="button" onClick={() => zoomAt(0, 0, 1.4)} aria-label="Zoom in">
           +
         </button>
         <button
           type="button"
           onClick={() => {
             setFocused(null);
-            target.current = fit();
+            target.current = home();
           }}
         >
-          Show all
+          {world.phone ? "Top" : "Show all"}
         </button>
       </div>
 
-      <svg className="board-map" viewBox={`0 0 ${WORLD.width} ${WORLD.height}`} onClick={jump} role="img" aria-label="A map of the board">
-        {items.map((item) => {
-          const [x, y, w, h] = placeOf(item.id);
-          return <rect key={item.id} x={x} y={y} width={w} height={h} rx={18} fill={item.hue} opacity={item.kind === "site" ? 0.75 : 0.35} />;
-        })}
-        <rect ref={viewRef} className="board-map-view" rx={10} />
-      </svg>
+      {world.phone ? null : (
+        <svg className="board-map" viewBox={`0 0 ${world.width} ${world.height}`} onClick={jump} role="img" aria-label="A map of the board">
+          {items.map((item) => {
+            const [x, y, w, h] = placeOf(world, item.id);
+            return <rect key={item.id} x={x} y={y} width={w} height={h} rx={18} fill={item.hue} opacity={item.kind === "site" ? 0.75 : 0.35} />;
+          })}
+          <rect ref={viewRef} className="board-map-view" rx={10} />
+        </svg>
+      )}
     </div>
   );
 }

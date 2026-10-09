@@ -167,15 +167,38 @@ a {
   transition: opacity 0.5s;
 }
 
+.frame-poster em {
+  position: absolute;
+  left: 50%;
+  bottom: 9%;
+  translate: -50% 0;
+  padding: 0.35em 1em;
+  border-radius: 999px;
+  background: var(--abyss);
+  color: var(--foam);
+  font-style: normal;
+  font-weight: 560;
+  font-size: max(10px, 3.6cqi);
+  white-space: nowrap;
+}
+
 .frame-poster {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
+  container-type: inline-size;
   background: color-mix(in srgb, var(--hue) 22%, #f4f6fa) center / cover no-repeat;
   color: color-mix(in srgb, var(--hue) 70%, #0a2e38);
   font-weight: 800;
-  font-size: 28px;
+}
+
+.frame-poster span {
+  padding: 0 6cqi 8cqi;
+  font-size: 7.5cqi;
+  line-height: 1.1;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
 .caption {
@@ -215,7 +238,7 @@ a {
 
 .card-tile {
   container-type: inline-size;
-  padding: 16px 18px;
+  padding: calc(16px * var(--k, 1)) calc(18px * var(--k, 1));
   border-radius: 22px;
   background: var(--plate);
   box-shadow:
@@ -232,19 +255,26 @@ a {
 }
 
 .card-tile h3 {
-  font-size: max(11px, 4.4cqi);
+  font-size: 4.4cqi;
   font-weight: 650;
   color: color-mix(in srgb, var(--hue) 75%, var(--foam));
 }
 
 .card-tile p {
   margin: 0 0 0.6em;
-  font-size: max(10.5px, 4.3cqi);
+  font-size: 4.3cqi;
   color: var(--mist);
 }
 
 .card-tile p strong {
   color: var(--foam);
+}
+
+.card-tile .me-lede {
+  color: var(--foam);
+  font-weight: 650;
+  font-size: 5cqi;
+  line-height: 1.3;
 }
 
 .me-name {
@@ -283,7 +313,7 @@ a {
 .proof dd {
   margin: 3px 0 0;
   color: var(--mist);
-  font-size: max(9.5px, 3.7cqi);
+  font-size: 3.7cqi;
   line-height: 1.25;
 }
 
@@ -293,7 +323,7 @@ a {
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: max(10px, 4cqi);
+  font-size: 4cqi;
 }
 
 .now li {
@@ -393,6 +423,21 @@ a {
   height: 100%;
 }
 
+.pond-scroll {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.pond-scroll.is-phone {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pond-content {
+  position: relative;
+}
+
 .floating {
   will-change: transform;
 }
@@ -481,17 +526,35 @@ a {
 
 @media (max-width: 720px) {
   .bar {
-    grid-template-columns: 1fr;
-    height: auto;
+    display: flex;
+    justify-content: space-between;
     gap: 8px;
-    padding: 10px 12px;
+    height: 52px;
+    padding: 0 12px 0 16px;
   }
   .bar-note,
   .expanded-blurb {
     display: none;
   }
   .tabs a {
-    padding: 6px 10px;
+    padding: 5px 12px;
+    font-size: 14px;
+  }
+  .expanded-bar {
+    gap: 8px;
+    padding: 0 8px 0 14px;
+  }
+  .expanded-bar strong {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .expanded-bar a,
+  .expanded-bar button {
+    padding: 6px 11px;
+    font-size: 12px;
   }
 }
 
@@ -595,6 +658,11 @@ a {
   font-variation-settings: var(--mono-axis);
 }
 
+.board.is-phone .board-controls {
+  right: 12px;
+  bottom: 12px;
+}
+
 .board-map {
   position: absolute;
   right: 16px;
@@ -618,6 +686,8 @@ a {
 /* The river */
 
 .river {
+  touch-action: none;
+  cursor: grab;
   background: linear-gradient(180deg, var(--abyss) 0%, var(--deep) 45%, var(--shallows) 100%);
 }
 

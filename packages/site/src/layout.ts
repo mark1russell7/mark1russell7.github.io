@@ -19,17 +19,18 @@ export function plateSize(item: Item): { w: number; h: number } {
   if (item.kind === "pebble") return { w: Math.max(176, Math.round(item.name.length * 8.4 + 72)), h: 58 };
   switch (item.id) {
     case "me":
-      return { w: 310, h: 206 };
+      return { w: 340, h: 300 };
     case "proof":
-      return { w: 300, h: 206 };
+      return { w: 300, h: 172 };
     case "now":
-      return { w: 300, h: 200 };
-    case "craft":
-      return { w: 270, h: 164 };
+      return { w: 300, h: 172 };
     case "meter":
-      return { w: 270, h: 190 };
+      return { w: 270, h: 168 };
   }
 }
+
+/** The pool uses its phone layouts below this width, in CSS pixels. */
+export const PHONE_WIDTH = 720;
 
 /**
  * This function moves the boxes until no two boxes overlap and each box is in the area.

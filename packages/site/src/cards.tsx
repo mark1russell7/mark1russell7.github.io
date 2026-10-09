@@ -1,5 +1,5 @@
 import { type CSSProperties, type ReactElement, useEffect, useRef, useState } from "react";
-import { type Item, links, type Pebble, proof, type Site, type Tile } from "./content.ts";
+import { bio, type Item, links, type Pebble, proof, type Site, type Tile } from "./content.ts";
 import { meter } from "./loop.ts";
 
 /** The size of the viewport in the frame of a site, before the frame scales it. */
@@ -37,6 +37,34 @@ function prepareFrame(frame: HTMLIFrameElement, selector: string | undefined): v
   run();
 }
 
+const siteStatus = new Map<string, Promise<boolean>>();
+
+/**
+ * This hook gives true when the site is on the server, false when the server gives an error, and null before the answer.
+ * A new site can be in the list before its first deployment. Its card then links to the repository.
+ */
+export function useSiteExists(site: Site): boolean | null {
+  const [exists, setExists] = useState<boolean | null>(null);
+  useEffect(() => {
+    let status = siteStatus.get(site.path);
+    if (!status) {
+      status = fetch(site.path, { method: "HEAD" }).then(
+        (response) => response.ok,
+        () => true,
+      );
+      siteStatus.set(site.path, status);
+    }
+    let live = true;
+    void status.then((value) => {
+      if (live) setExists(value);
+    });
+    return () => {
+      live = false;
+    };
+  }, [site.path]);
+  return exists;
+}
+
 /**
  * This component shows a site live in a frame. The frame has the size of a desktop viewport, and a transform scales it to `width` and `height`.
  * The frame covers the box, and the box clips the edges of the frame.
@@ -44,6 +72,7 @@ function prepareFrame(frame: HTMLIFrameElement, selector: string | undefined): v
 export function SiteFrame(props: { site: Site; width: number; height: number; interactive?: boolean }): ReactElement {
   const { site, width, height, interactive = false } = props;
   const [loaded, setLoaded] = useState(false);
+  const exists = useSiteExists(site);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const scale = Math.max(width / FRAME_WIDTH, height / FRAME_HEIGHT);
   const offsetX = (width - FRAME_WIDTH * scale) / 2;
@@ -59,19 +88,23 @@ export function SiteFrame(props: { site: Site; width: number; height: number; in
     <div className="frame" style={{ width, height, "--hue": site.hue } as CSSProperties}>
       <div className="frame-poster" style={site.poster ? { backgroundImage: `url(${site.poster})` } : undefined}>
         {site.poster ? null : <span>{site.name}</span>}
+        {exists === false ? <em>The site is on its way</em> : null}
       </div>
-      <iframe
+      {exists ? (
+        <iframe
         ref={frameRef}
         src={site.path}
         title={`The site of ${site.name}`}
         tabIndex={interactive ? 0 : -1}
         aria-hidden={interactive ? undefined : true}
         style={frameStyle}
+        loading="lazy"
         onLoad={() => {
           if (frameRef.current) prepareFrame(frameRef.current, site.focus);
           setLoaded(true);
         }}
       />
+      ) : null}
     </div>
   );
 }
@@ -222,7 +255,10 @@ export function TileBody({ tile }: { tile: Tile }): ReactElement {
       return (
         <>
           <h2 className="me-name">Mark Russell</h2>
-          <p>Mark Russell makes TypeScript libraries for the browser and for Node.js. Each library has a site with a live demo, the test results and a specification.</p>
+          <p className="me-lede">{bio.lede}</p>
+          {bio.body.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
           <p className="tile-links">
             <a href={links.github}>GitHub</a>
             <a href={links.npm}>npm</a>
@@ -245,16 +281,6 @@ export function TileBody({ tile }: { tile: Tile }): ReactElement {
       );
     case "now":
       return <NowBody />;
-    case "craft":
-      return (
-        <>
-          <h3>Plain words</h3>
-          <p>
-            The text of each site obeys the rules of ASD-STE100 Simplified Technical English. The linter <a href={`${links.github}/ste-lint`}>ste-lint</a>{" "}
-            examines it in CI.
-          </p>
-        </>
-      );
     case "meter":
       return <MeterBody />;
   }
@@ -289,30 +315,10 @@ export function PlateCard(props: {
   /** The scale of the card, from its base size. The caption and the text of a pebble use this scale. */
   scale?: number;
 }): ReactElement {
-  const { item, width, height, onOpen, cardRef, interactive = false, scale = 1 } = props;
+  const { item, width, height, cardRef, scale = 1 } = props;
   const style = { width, height, "--hue": item.hue, "--k": scale, ...props.style } as CSSProperties;
   const className = `card card-${item.kind} ${props.className ?? ""}`;
-  if (item.kind === "site") {
-    return (
-      <a
-        ref={cardRef}
-        href={item.path}
-        className={className}
-        style={style}
-        data-id={item.id}
-        draggable={false}
-        aria-label={`${item.name}: ${item.blurb}`}
-        onClick={(event) => {
-          if (!onOpen || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
-          event.preventDefault();
-          onOpen(item.id, event.currentTarget);
-        }}
-      >
-        <SiteFrame site={item} width={width} height={height - CAPTION_HEIGHT * scale} interactive={interactive} />
-        <SiteCaption site={item} scale={scale} />
-      </a>
-    );
-  }
+  if (item.kind === "site") return <SiteCard {...props} site={item} style={style} className={className} />;
   if (item.kind === "pebble") {
     return (
       <a ref={cardRef} href={item.href} className={className} style={style} data-id={item.id} draggable={false}>
@@ -324,5 +330,31 @@ export function PlateCard(props: {
     <article ref={cardRef} className={className} style={style} data-id={item.id}>
       <TileBody tile={item} />
     </article>
+  );
+}
+
+/** This component shows a site as a flat card. When the site is not on the server yet, the card links to the repository. */
+function SiteCard(props: Parameters<typeof PlateCard>[0] & { site: Site; className: string; style: CSSProperties }): ReactElement {
+  const { site, width, height, onOpen, cardRef, interactive = false, scale = 1, className, style } = props;
+  const exists = useSiteExists(site);
+  const missing = exists === false;
+  return (
+    <a
+      ref={cardRef}
+      href={missing ? site.repo : site.path}
+      className={className}
+      style={style}
+      data-id={site.id}
+      draggable={false}
+      aria-label={`${site.name}: ${site.blurb}`}
+      onClick={(event) => {
+        if (missing || !onOpen || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+        event.preventDefault();
+        onOpen(site.id, event.currentTarget);
+      }}
+    >
+      <SiteFrame site={site} width={width} height={height - CAPTION_HEIGHT * scale} interactive={interactive} />
+      <SiteCaption site={site} scale={scale} />
+    </a>
   );
 }

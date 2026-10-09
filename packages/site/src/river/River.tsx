@@ -7,8 +7,8 @@ import { ease, useLoop, useSize } from "../loop.ts";
 
 /** Each lane is a depth. A far lane is higher on the screen, smaller and slower. */
 const lanes: readonly { readonly ids: readonly string[]; readonly depth: number; readonly y: number; readonly speed: number }[] = [
-  { ids: ["ste-lint", "optional", "cue", "otel-ts", "page-lifecycle-tracker", "template"], depth: 0.74, y: 0.13, speed: 0.5 },
-  { ids: ["lag", "proof", "client", "craft", "render", "meter", "systems"], depth: 0.8, y: 0.4, speed: 0.72 },
+  { ids: ["ste-lint", "optional", "cue", "otel-ts", "template"], depth: 0.74, y: 0.13, speed: 0.5 },
+  { ids: ["lag", "proof", "client", "page-lifecycle-tracker", "render", "meter", "systems"], depth: 0.8, y: 0.4, speed: 0.72 },
   { ids: ["me", "vex", "now", "async-browser-context"], depth: 1, y: 0.73, speed: 1 },
 ];
 
@@ -35,7 +35,8 @@ interface Plan {
 }
 
 function plan(width: number, height: number): Plan {
-  const scale = Math.min(1.25, Math.max(0.55, (height * 0.38) / 320));
+  // The largest card of the front lane fills 38% of the height, but not more than 82% of the width, so it fits on a phone.
+  const scale = Math.min(1.25, Math.max(0.45, Math.min((height * 0.38) / 320, (width * 0.82) / 420)));
   const floaters: Floater[] = [];
   const lengths: number[] = [];
   lanes.forEach((lane, index) => {
@@ -101,6 +102,8 @@ export function River({ onOpen, reduced, paused }: ConceptProps): ReactElement {
   const layout = useMemo(() => (width > 0 ? plan(width, height) : null), [width, height]);
   const elements = useRef(new Map<string, HTMLElement>());
   const pointer = useRef({ x: 0, y: 0, inside: false, down: false });
+  /** A drag moves the river. A drag of more than a few pixels is not a click on a card. */
+  const drag = useRef<{ x: number; moved: number } | null>(null);
   const scroll = useRef(0);
   const speed = useRef(reduced ? 0 : 8);
   const start = useRef(performance.now());
@@ -206,17 +209,35 @@ export function River({ onOpen, reduced, paused }: ConceptProps): ReactElement {
       pointer.current.x = event.clientX - rect.left;
       pointer.current.y = event.clientY - rect.top;
       pointer.current.inside = true;
+      const current = drag.current;
+      if (current) {
+        scroll.current += current.x - event.clientX;
+        current.moved += Math.abs(current.x - event.clientX);
+        current.x = event.clientX;
+      }
     };
     const leave = (): void => {
       pointer.current.inside = false;
       pointer.current.down = false;
     };
     const down = (event: PointerEvent): void => {
+      drag.current = { x: event.clientX, moved: 0 };
       if (event.target instanceof Element && event.target.closest("a, button")) return;
       pointer.current.down = true;
     };
     const up = (): void => {
       pointer.current.down = false;
+      const current = drag.current;
+      drag.current = null;
+      if (current && current.moved > 6) {
+        // The click that follows the drag does not open a card.
+        const block = (event: MouseEvent): void => {
+          event.preventDefault();
+          event.stopPropagation();
+        };
+        root.addEventListener("click", block, { capture: true, once: true });
+        setTimeout(() => root.removeEventListener("click", block, { capture: true }), 0);
+      }
     };
     const wheel = (event: WheelEvent): void => {
       event.preventDefault();
