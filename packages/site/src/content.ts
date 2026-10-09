@@ -76,6 +76,7 @@ export const sites: readonly Site[] = [
     blurb: "It measures how long the main thread makes users wait, and exports the result as OpenTelemetry metrics.",
     hue: "#F2AA3C",
     tier: 2,
+    poster: "/lag/og/index.png",
     repo: `${github}/lag`,
   },
   {
