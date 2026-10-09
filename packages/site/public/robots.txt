@@ -3,3 +3,4 @@ Allow: /
 
 # The project sites under this domain have their own sitemaps.
 Sitemap: https://mark1russell7.github.io/vex/sitemap-index.xml
+Sitemap: https://mark1russell7.github.io/AsyncBrowserContext/sitemap.xml
