@@ -125,6 +125,18 @@ export const sites: readonly Site[] = [
     tier: 2,
     repo: `${github}/page-lifecycle-tracker`,
   },
+  {
+    kind: "site",
+    id: "crawler",
+    name: "polite-crawler",
+    path: "/crawler/",
+    tagline: "Fetch once. Read many times.",
+    blurb: "A polite web crawler for research and AI agents. It fetches a source once, keeps it, and gives full-text search and an MCP server.",
+    hue: "#D9E04F",
+    tier: 2,
+    poster: "/crawler/og.png",
+    repo: `${github}/crawler`,
+  },
 ];
 
 export const tiles: readonly Tile[] = [

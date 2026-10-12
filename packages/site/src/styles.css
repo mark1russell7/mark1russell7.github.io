@@ -633,8 +633,8 @@ a {
 
 .board-controls {
   position: absolute;
-  right: 16px;
-  bottom: 160px;
+  right: 268px;
+  bottom: 16px;
   z-index: 12;
   display: flex;
   align-items: center;
