@@ -15,6 +15,7 @@ const homes: Record<string, [number, number]> = {
   lag: [0.9, 0.22],
   "page-lifecycle-tracker": [0.52, 0.08],
   crawler: [0.2, 0.47],
+  ireko: [0.46, 0.55],
   proof: [0.1, 0.66],
   client: [0.3, 0.74],
   render: [0.53, 0.78],
@@ -29,7 +30,7 @@ const homes: Record<string, [number, number]> = {
 };
 
 /** The order of the cards in the column of the phone layout. The pebbles follow. */
-const phoneOrder = ["me", "vex", "async-browser-context", "lag", "client", "render", "systems", "page-lifecycle-tracker", "crawler", "proof", "now", "meter"];
+const phoneOrder = ["me", "vex", "async-browser-context", "lag", "client", "render", "systems", "page-lifecycle-tracker", "crawler", "ireko", "proof", "now", "meter"];
 
 /** A box of the layout, with the scale of its card from the base size. */
 interface Placed extends Box {

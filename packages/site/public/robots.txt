@@ -11,3 +11,4 @@ Sitemap: https://mark1russell7.github.io/render/sitemap-index.xml
 Sitemap: https://mark1russell7.github.io/systems/sitemap-index.xml
 Sitemap: https://mark1russell7.github.io/page-lifecycle-tracker/sitemap.xml
 Sitemap: https://mark1russell7.github.io/crawler/sitemap-index.xml
+Sitemap: https://mark1russell7.github.io/ireko/sitemap-index.xml

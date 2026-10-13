@@ -137,6 +137,19 @@ export const sites: readonly Site[] = [
     poster: "/crawler/og.png",
     repo: `${github}/crawler`,
   },
+  {
+    kind: "site",
+    id: "ireko",
+    name: "ireko",
+    path: "/ireko/",
+    tagline: "A layout for each box of a diagram",
+    blurb: "Composable graph and tree layout for TypeScript. Each container selects its own layout, and SVG, Canvas, the DOM or React Flow draws the result.",
+    hue: "#56CCF2",
+    tier: 2,
+    focus: ".ik-live",
+    poster: "/ireko/og/index.png",
+    repo: `${github}/ireko`,
+  },
 ];
 
 export const tiles: readonly Tile[] = [

@@ -24,20 +24,21 @@ const desktop: World = {
     now: [2420, 0, 420, 300],
     meter: [0, 410, 420, 262],
     proof: [2420, 340, 420, 241],
-    lag: [0, 760, 436, 360],
-    client: [481, 760, 436, 360],
-    render: [962, 760, 436, 360],
-    systems: [1442, 760, 436, 360],
-    "page-lifecycle-tracker": [1923, 760, 436, 360],
-    crawler: [2404, 760, 436, 360],
-    "ste-lint": [0, 1200, 536, 96],
-    optional: [576, 1200, 536, 96],
-    cue: [1152, 1200, 536, 96],
-    "otel-ts": [1728, 1200, 536, 96],
-    template: [2304, 1200, 536, 96],
+    lag: [0, 760, 372, 307],
+    client: [411, 760, 372, 307],
+    render: [823, 760, 372, 307],
+    systems: [1234, 760, 372, 307],
+    "page-lifecycle-tracker": [1645, 760, 372, 307],
+    crawler: [2057, 760, 372, 307],
+    ireko: [2468, 760, 372, 307],
+    "ste-lint": [0, 1147, 536, 96],
+    optional: [576, 1147, 536, 96],
+    cue: [1152, 1147, 536, 96],
+    "otel-ts": [1728, 1147, 536, 96],
+    template: [2304, 1147, 536, 96],
   },
   width: 2840,
-  height: 1296,
+  height: 1243,
   phone: false,
 };
 
@@ -46,7 +47,7 @@ function phoneWorld(): World {
   const width = 600;
   const gap = 40;
   const heights: Record<string, number> = { me: 529, proof: 344, now: 344, meter: 374 };
-  const order = ["me", "vex", "async-browser-context", "lag", "client", "render", "systems", "page-lifecycle-tracker", "crawler", "proof", "now", "meter"];
+  const order = ["me", "vex", "async-browser-context", "lag", "client", "render", "systems", "page-lifecycle-tracker", "crawler", "ireko", "proof", "now", "meter"];
   const places: Record<string, Place> = {};
   let y = 0;
   for (const id of order) {
