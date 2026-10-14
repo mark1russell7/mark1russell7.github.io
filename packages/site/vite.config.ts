@@ -19,19 +19,40 @@ function jsonLd(data: unknown): string {
 
 /**
  * This plugin writes the content of the pool into the HTML for search engines and for readers without JavaScript.
- * It adds structured data (a person and a list of projects), a plain list of the projects in the root element, and a sitemap.
+ * It adds structured data, a plain list of the projects in the root element, and a sitemap.
+ * The structured data is a profile page about a person, the website, and a list of projects.
  * React replaces the plain list when it starts.
  */
 function seo(): Plugin {
+  const today = new Date().toISOString().slice(0, 10);
   const person = {
-    "@context": "https://schema.org",
     "@type": "Person",
+    "@id": `${origin}/#person`,
     name: "Mark Russell",
     url: `${origin}/`,
-    jobTitle: "Software engineer",
-    description: bio.lede,
-    sameAs: [links.github, links.npm],
-    knowsAbout: ["TypeScript", "Programming languages", "Reactive programming", "Web performance", "OpenTelemetry", "Model Context Protocol"],
+    jobTitle: "Software Engineer",
+    worksFor: { "@type": "Organization", name: "Tulip" },
+    description: "Mark Russell is a software engineer who builds reliability tooling and infrastructure for AI agents.",
+    sameAs: [links.linkedin, links.github, links.npm],
+    knowsAbout: ["Site reliability engineering", "Observability", "OpenTelemetry", "MongoDB", "Linux TCP", "Model Context Protocol", "TypeScript"],
+  };
+  const profilePage = {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    "@id": `${origin}/#profile`,
+    url: `${origin}/`,
+    name: "Mark Russell",
+    dateModified: today,
+    mainEntity: person,
+  };
+  const website = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${origin}/#website`,
+    name: "Mark Russell",
+    url: `${origin}/`,
+    inLanguage: "en",
+    author: { "@type": "Person", "@id": `${origin}/#person`, name: "Mark Russell", url: `${origin}/` },
   };
   const projectList = {
     "@context": "https://schema.org",
@@ -48,7 +69,7 @@ function seo(): Plugin {
           url: project.url,
           codeRepository: project.repo,
           programmingLanguage: "TypeScript",
-          author: { "@type": "Person", name: "Mark Russell", url: `${origin}/` },
+          author: { "@type": "Person", "@id": `${origin}/#person`, name: "Mark Russell", url: `${origin}/` },
         },
       }),
     ),
@@ -62,10 +83,9 @@ function seo(): Plugin {
     ...sites.map((site) => `<li><a href="${site.path}">${escape(site.name)}</a>: ${escape(site.blurb)}</li>`),
     `</ul><h2>Smaller repositories</h2><ul>`,
     ...pebbles.map((pebble) => `<li><a href="${pebble.href}">${escape(pebble.name)}</a>: ${escape(pebble.blurb)}</li>`),
-    `</ul><p><a href="${links.github}">GitHub</a> and <a href="${links.npm}">npm</a></p>`,
+    `</ul><p><a href="${links.linkedin}">LinkedIn</a>, <a href="${links.github}">GitHub</a> and <a href="${links.npm}">npm</a></p>`,
     `</main>`,
   ].join("");
-  const today = new Date().toISOString().slice(0, 10);
   const sitemap = [
     `<?xml version="1.0" encoding="UTF-8"?>`,
     `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
@@ -79,7 +99,7 @@ function seo(): Plugin {
     transformIndexHtml(html) {
       return html
         .replace(`<div id="root"></div>`, `<div id="root">${fallback}</div>`)
-        .replace("</head>", `    ${jsonLd(person)}\n    ${jsonLd(projectList)}\n  </head>`);
+        .replace("</head>", `    ${jsonLd(profilePage)}\n    ${jsonLd(website)}\n    ${jsonLd(projectList)}\n  </head>`);
     },
     generateBundle() {
       this.emitFile({ type: "asset", fileName: "sitemap.xml", source: sitemap });

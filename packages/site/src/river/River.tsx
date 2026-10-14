@@ -8,8 +8,8 @@ import { ease, useLoop, useSize } from "../loop.ts";
 /** Each lane is a depth. A far lane is higher on the screen, smaller and slower. */
 const lanes: readonly { readonly ids: readonly string[]; readonly depth: number; readonly y: number; readonly speed: number }[] = [
   { ids: ["ste-lint", "optional", "cue", "otel-ts", "template"], depth: 0.74, y: 0.13, speed: 0.5 },
-  { ids: ["lag", "proof", "client", "ireko", "page-lifecycle-tracker", "render", "crawler", "meter", "systems"], depth: 0.8, y: 0.4, speed: 0.72 },
-  { ids: ["me", "vex", "now", "async-browser-context"], depth: 1, y: 0.73, speed: 1 },
+  { ids: ["crawler", "proof", "lag", "async-browser-context", "page-lifecycle-tracker", "render", "vex", "meter", "ireko"], depth: 0.8, y: 0.4, speed: 0.72 },
+  { ids: ["me", "systems", "now", "client"], depth: 1, y: 0.73, speed: 1 },
 ];
 
 /** The speed of the front lane, in pixels for each second. */

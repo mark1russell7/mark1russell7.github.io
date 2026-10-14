@@ -260,6 +260,7 @@ export function TileBody({ tile }: { tile: Tile }): ReactElement {
             <p key={paragraph}>{paragraph}</p>
           ))}
           <p className="tile-links">
+            <a href={links.linkedin}>LinkedIn</a>
             <a href={links.github}>GitHub</a>
             <a href={links.npm}>npm</a>
           </p>

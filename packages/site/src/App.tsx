@@ -63,9 +63,14 @@ export function App(): ReactElement {
   return (
     <div className="app">
       <header className="bar">
-        <a className="wordmark" href={links.github}>
-          Mark Russell
-        </a>
+        <span className="bar-name">
+          <a className="wordmark" href={links.github}>
+            Mark Russell
+          </a>
+          <a className="bar-link" href={links.linkedin}>
+            LinkedIn
+          </a>
+        </span>
         <nav className="tabs" aria-label="Concepts of the pool">
           {concepts.map((c) => (
             <a key={c.id} href={`#${c.id}`} aria-current={c.id === route.concept ? "page" : undefined}>

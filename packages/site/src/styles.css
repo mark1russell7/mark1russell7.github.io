@@ -70,6 +70,23 @@ a {
   font-variation-settings: "CASL" 0.6;
 }
 
+.bar-name {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+}
+
+.bar-link {
+  color: var(--mist);
+  font-size: 12.5px;
+  text-decoration-color: color-mix(in srgb, var(--mist) 40%, transparent);
+  text-underline-offset: 3px;
+}
+
+.bar-link:hover {
+  color: var(--foam);
+}
+
 .tabs {
   display: flex;
   gap: 4px;
@@ -533,6 +550,7 @@ a {
     padding: 0 12px 0 16px;
   }
   .bar-note,
+  .bar-link,
   .expanded-blurb {
     display: none;
   }
