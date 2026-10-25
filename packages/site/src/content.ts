@@ -175,6 +175,18 @@ export const curated: readonly Site[] = [
     poster: "/ireko/og/index.png",
     repo: `${github}/ireko`,
   },
+  {
+    kind: "site",
+    id: "highways",
+    name: "highways",
+    path: "/highways/",
+    tagline: "Edge routes on a tree of highways",
+    blurb: "It routes the edges of large graphs with highways, bundles and zoom levels. Pick a router and a fixture, and your browser routes the map live.",
+    hue: "#EE7BD0",
+    tier: 2,
+    focus: ".stage",
+    repo: `${github}/highways`,
+  },
 ];
 
 /**
