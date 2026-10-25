@@ -10,8 +10,8 @@
   "scripts": {
     "dev": "pnpm --filter @portfolio/site dev",
     "build": "pnpm -r run build",
-    "package": "tsx packages/cli/src/index.ts package",
-    "template": "tsx packages/cli/src/index.ts repo",
+    "package": "template package",
+    "template": "template repo",
     "test": "pnpm -r run test",
     "typecheck": "pnpm -r run typecheck",
     "lint:ste": "ste-lint"
@@ -19,6 +19,7 @@
   "devDependencies": {
     "@mark1russell7/cue": "github:mark1russell7/cue",
     "@mark1russell7/ste-lint": "github:mark1russell7/ste-lint",
+    "@mark1russell7/template-cli": "^0.1.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }
