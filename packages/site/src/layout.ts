@@ -1,5 +1,60 @@
 import { CAPTION_HEIGHT, FRAME_HEIGHT, FRAME_WIDTH } from "./cards.tsx";
-import type { Item } from "./content.ts";
+import type { Item, Pebble, Site, Tile } from "./content.ts";
+
+/** The items of a list by kind. The layouts use these groups, so each new site gets a place without a change to a layout. */
+export interface Groups {
+  /** The tier 1 sites, in the order of the list. */
+  readonly featured: readonly Site[];
+  /** The tier 2 sites, in the order of the list. The written cards come first, then the found sites. */
+  readonly sites: readonly Site[];
+  readonly tiles: readonly Tile[];
+  readonly pebbles: readonly Pebble[];
+}
+
+/** This function puts the items of a list into groups by kind and tier. Each group keeps the order of the list. */
+export function groups(list: readonly Item[]): Groups {
+  const featured: Site[] = [];
+  const sites: Site[] = [];
+  const tiles: Tile[] = [];
+  const pebbles: Pebble[] = [];
+  for (const item of list) {
+    if (item.kind === "site") (item.tier === 1 ? featured : sites).push(item);
+    else if (item.kind === "tile") tiles.push(item);
+    else pebbles.push(item);
+  }
+  return { featured, sites, tiles, pebbles };
+}
+
+/** The tiles that come before the sites in a column. The other tiles come after the sites. */
+const LEAD_TILES: ReadonlySet<Tile["id"]> = new Set(["me"]);
+
+/** This function gives the order of the items in one column: the lead tile, the sites by tier, the other tiles, then the pebbles. */
+export function columnOrder(list: readonly Item[]): Item[] {
+  const { featured, sites, tiles, pebbles } = groups(list);
+  return [...tiles.filter((tile) => LEAD_TILES.has(tile.id)), ...featured, ...sites, ...tiles.filter((tile) => !LEAD_TILES.has(tile.id)), ...pebbles];
+}
+
+/**
+ * This function divides `count` cards into rows of `max` cards or fewer. The number of rows is as small as possible,
+ * and the rows have almost the same length. The longer rows come first: 9 cards in rows of 8 or fewer give 5 and 4.
+ */
+export function rowSizes(count: number, max: number): number[] {
+  if (count <= 0) return [];
+  const rows = Math.ceil(count / Math.max(1, max));
+  const base = Math.floor(count / rows);
+  return Array.from({ length: rows }, (_, row) => base + (row < count % rows ? 1 : 0));
+}
+
+/** This function gives the number with the index `index` in the Halton sequence of the base `base`. The numbers spread evenly from 0 to 1. */
+export function halton(index: number, base: number): number {
+  let result = 0;
+  let fraction = 1 / base;
+  for (let n = index + 1; n > 0; n = Math.floor(n / base)) {
+    result += fraction * (n % base);
+    fraction /= base;
+  }
+  return result;
+}
 
 /** A box has its center at `x`, `y`. */
 export interface Box {
