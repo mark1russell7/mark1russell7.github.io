@@ -1,0 +1,52 @@
+[
+  {
+    "repo": "AsyncBrowserContext",
+    "path": "/AsyncBrowserContext/",
+    "description": "AsyncLocalStorage and the TC39 AsyncContext API for browsers: the context stays through await, then, timers, events and generators."
+  },
+  {
+    "repo": "client",
+    "path": "/client/",
+    "description": "Procedures as data for TypeScript: one typed call model for in-process, HTTP, WebSocket, CLI and MCP (Claude) — with streaming, middleware and a visual composer."
+  },
+  {
+    "repo": "coeval",
+    "path": "/coeval/",
+    "description": "A base for declarative languages: a document gets its meaning from a question. Its kind names the evaluator, and a ladder finds it."
+  },
+  {
+    "repo": "crawler",
+    "path": "/crawler/",
+    "description": "polite-crawler: a polite web crawler for research and AI agents. Fetch once, keep it, read it many times. robots.txt, one request per site, full-text search, MCP server."
+  },
+  {
+    "repo": "ireko",
+    "path": "/ireko/",
+    "description": "Composable graph and tree layout for TypeScript. Select a layout for each container, and get boxes and routed edges for SVG, Canvas, the DOM or React Flow."
+  },
+  {
+    "repo": "lag",
+    "path": "/lag/",
+    "description": "Main-thread lag monitoring for browser apps: event loop lag, long tasks, Long Animation Frames, hangs, INP and Web Vitals from real users, as OpenTelemetry metrics, events and traces."
+  },
+  {
+    "repo": "page-lifecycle-tracker",
+    "path": "/page-lifecycle-tracker/",
+    "description": "The Page Lifecycle API state of a web page (active, passive, hidden, frozen, terminated) for monitoring and telemetry libraries: one shared tracker, observers before exporters, back/forward cache restores."
+  },
+  {
+    "repo": "render",
+    "path": "/render/",
+    "description": "A reactive expression engine for TypeScript whose interface renders its own expressions: ordered epochs, classes as data, and a live editor."
+  },
+  {
+    "repo": "systems",
+    "path": "/systems/",
+    "description": "How long until a client knows that its peer is gone: computed by an algebra, measured by a harness."
+  },
+  {
+    "repo": "vex",
+    "path": "/vex/",
+    "description": "Typed spreadsheet formulas over TypeScript objects: one formula evaluated at each record, axes over related records, sheets with cycle detection, and an error value with a reason instead of an exception."
+  }
+]
