@@ -1,3 +1,5 @@
+import discovered from "./discovered.json" with { type: "json" };
+
 /** A project with its own site under this domain. The pool shows the site live in a frame. */
 export interface Site {
   readonly kind: "site";
@@ -41,11 +43,18 @@ export type Item = Site | Tile | Pebble;
 
 const github = "https://github.com/mark1russell7";
 
+/** A public repository with a GitHub Pages site, as `scripts/discover.ts` found it. */
+export interface Discovered {
+  readonly repo: string;
+  readonly path: string;
+  readonly description: string;
+}
+
 /**
- * The projects, in the order of the lists for search engines. The first projects are about reliability and tools for AI agents.
+ * The projects with a written card, in the order of the lists for search engines. The first projects are about reliability and tools for AI agents.
  * The pool shows the tier 1 projects in its two large places.
  */
-export const sites: readonly Site[] = [
+export const curated: readonly Site[] = [
   {
     kind: "site",
     id: "systems",
@@ -132,6 +141,17 @@ export const sites: readonly Site[] = [
   },
   {
     kind: "site",
+    id: "coeval",
+    name: "coeval",
+    path: "/coeval/",
+    tagline: "A base for declarative languages",
+    blurb: "A base for declarative languages. A document gets its meaning from a question. Its kind names the evaluator, and a ladder finds it.",
+    hue: "#FFB3C7",
+    tier: 2,
+    repo: `${github}/coeval`,
+  },
+  {
+    kind: "site",
     id: "render",
     name: "render",
     path: "/render/",
@@ -156,6 +176,35 @@ export const sites: readonly Site[] = [
     repo: `${github}/ireko`,
   },
 ];
+
+/**
+ * This function gives an automatic card for a site that `curated` does not describe. The text comes from the description of the repository.
+ * The card takes the hue of a written card, in turn.
+ */
+export function autoSite(found: Discovered, index: number): Site {
+  const text = found.description || `The site of ${found.repo}.`;
+  const first = (text.split(/(?<=\.)\s/)[0] ?? text).replace(/\.$/, "");
+  return {
+    kind: "site",
+    id: found.repo.toLowerCase(),
+    name: found.repo,
+    path: found.path,
+    tagline: first.length > 48 ? `${first.slice(0, 47).trimEnd()}…` : first,
+    blurb: text,
+    hue: curated[index % curated.length]?.hue ?? "#93D86C",
+    tier: 2,
+    repo: `${github}/${found.repo}`,
+  };
+}
+
+/** This function gives the written cards, then an automatic card for each found site that has no written card. */
+export function mergeSites(written: readonly Site[], found: readonly Discovered[]): Site[] {
+  const paths = new Set(written.map((site) => site.path.toLowerCase()));
+  return [...written, ...found.filter((f) => !paths.has(f.path.toLowerCase())).map(autoSite)];
+}
+
+/** All projects with a site. The Pages workflow finds the sites again before each build, so a new site shows without a change here. */
+export const sites: readonly Site[] = mergeSites(curated, discovered);
 
 export const tiles: readonly Tile[] = [
   { kind: "tile", id: "me", name: "Mark Russell", hue: "#E6F0EC" },
