@@ -11,10 +11,10 @@ on:
   schedule:
     - cron: "17 9 * * *"
 
+# The build job runs the install scripts of the dependencies, so it can only read the repository.
+# Only the deploy job can write to GitHub Pages and get an OIDC token.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 # One deployment at a time. A newer push cancels a deployment that waits.
 concurrency:
@@ -24,6 +24,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -43,6 +45,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

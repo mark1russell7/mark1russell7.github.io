@@ -1,70 +1,19 @@
 import { type ReactElement, useEffect, useMemo, useRef } from "react";
 import { PlateCard } from "../cards.tsx";
 import type { ConceptProps } from "../concept.ts";
-import { type Item, itemById } from "../content.ts";
-import { plateSize, random } from "../layout.ts";
+import { items } from "../content.ts";
+import { random } from "../layout.ts";
 import { ease, useLoop, useSize } from "../loop.ts";
-
-/** Each lane is a depth. A far lane is higher on the screen, smaller and slower. */
-const lanes: readonly { readonly ids: readonly string[]; readonly depth: number; readonly y: number; readonly speed: number }[] = [
-  { ids: ["ste-lint", "optional", "cue", "otel-ts", "template"], depth: 0.74, y: 0.13, speed: 0.5 },
-  { ids: ["crawler", "proof", "lag", "async-browser-context", "page-lifecycle-tracker", "render", "vex", "meter", "ireko"], depth: 0.8, y: 0.4, speed: 0.72 },
-  { ids: ["me", "systems", "now", "client"], depth: 1, y: 0.73, speed: 1 },
-];
+import { type Floater, type Lane, riverPlan } from "./lanes.ts";
 
 /** The speed of the front lane, in pixels for each second. */
 const CURRENT = 52;
 const PARTICLES = 650;
 
-interface Floater {
-  readonly item: Item;
-  readonly lane: number;
-  readonly w: number;
-  readonly h: number;
-  readonly scale: number;
-  readonly phase: number;
-  x: number;
-  y: number;
-  vy: number;
-}
-
-interface Plan {
-  readonly floaters: Floater[];
-  readonly lengths: number[];
-  readonly scale: number;
-}
-
-function plan(width: number, height: number): Plan {
-  // The largest card of the front lane fills 38% of the height, but not more than 82% of the width, so it fits on a phone.
-  const scale = Math.min(1.25, Math.max(0.45, Math.min((height * 0.38) / 320, (width * 0.82) / 420)));
-  const floaters: Floater[] = [];
-  const lengths: number[] = [];
-  lanes.forEach((lane, index) => {
-    const members = lane.ids.map((id) => itemById(id)).filter((item): item is Item => item !== undefined);
-    const sizes = members.map((item) => {
-      const size = plateSize(item);
-      return { w: size.w * lane.depth * scale, h: size.h * lane.depth * scale };
-    });
-    const gap = 70 * lane.depth * scale;
-    const natural = sizes.reduce((sum, size) => sum + size.w + gap, 0);
-    const widest = Math.max(...sizes.map((size) => size.w));
-    const length = Math.max(natural, width + widest + gap);
-    const spare = (length - natural) / members.length;
-    lengths.push(length);
-    let x = width * 0.12 + index * 90;
-    members.forEach((item, k) => {
-      const size = sizes[k]!;
-      floaters.push({ item, lane: index, w: size.w, h: size.h, scale: lane.depth * scale, phase: random(k + index * 10) * Math.PI * 2, x: x + size.w / 2, y: lane.y * height, vy: 0 });
-      x += size.w + gap + spare;
-    });
-  });
-  return { floaters, lengths, scale };
-}
-
 /** This function gives the y of the center line of a lane at `x`. The line bends like a river. */
-function laneY(lane: number, x: number, t: number, height: number): number {
-  const base = (lanes[lane]?.y ?? 0.5) * height;
-  return base + Math.sin(x / 260 + t * 0.25 + lane * 1.7) * height * 0.025;
+function laneY(lane: Lane | undefined, index: number, x: number, t: number, height: number): number {
+  const base = (lane?.y ?? 0.5) * height;
+  return base + Math.sin(x / 260 + t * 0.25 + index * 1.7) * height * 0.025;
 }
 
 /**
@@ -99,7 +48,7 @@ export function River({ onOpen, reduced, paused }: ConceptProps): ReactElement {
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { width, height } = useSize(rootRef);
-  const layout = useMemo(() => (width > 0 ? plan(width, height) : null), [width, height]);
+  const layout = useMemo(() => (width > 0 ? riverPlan(items, width, height) : null), [width, height]);
   const elements = useRef(new Map<string, HTMLElement>());
   const pointer = useRef({ x: 0, y: 0, inside: false, down: false });
   /** A drag moves the river. A drag of more than a few pixels is not a click on a card. */
@@ -147,7 +96,7 @@ export function River({ onOpen, reduced, paused }: ConceptProps): ReactElement {
     const shift = scroll.current;
     scroll.current = 0;
     for (const f of layout.floaters) {
-      const lane = lanes[f.lane]!;
+      const lane = layout.lanes[f.lane]!;
       const length = layout.lengths[f.lane]!;
       if (f === hovered) {
         f.vy *= Math.exp(-8 * dt);
@@ -155,7 +104,7 @@ export function River({ onOpen, reduced, paused }: ConceptProps): ReactElement {
         const local = rock ? { x: rock.x, y: rock.y, r: rock.r + Math.min(f.w, f.h) * 0.45 } : null;
         flow(f.x, f.y, CURRENT * lane.speed * speed.current, local, velocity);
         f.x += velocity.x * dt;
-        const spring = (laneY(f.lane, f.x, t, height) - f.y) * 2.2;
+        const spring = (laneY(lane, f.lane, f.x, t, height) - f.y) * 2.2;
         f.vy += (velocity.y * 1.6 + spring - f.vy * 1.8) * dt * 2;
         f.y += f.vy * dt;
       }
@@ -165,7 +114,7 @@ export function River({ onOpen, reduced, paused }: ConceptProps): ReactElement {
     }
 
     // The cards in one lane keep a gap. A card that stops makes the cards behind it wait.
-    for (let lane = 0; lane < lanes.length; lane++) {
+    for (let lane = 0; lane < layout.lanes.length; lane++) {
       const members = layout.floaters.filter((f) => f.lane === lane);
       const length = layout.lengths[lane]!;
       for (let n = 0; n < 2; n++) {

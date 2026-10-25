@@ -1,42 +1,12 @@
 import { type ReactElement, useEffect, useMemo, useRef } from "react";
-import { CAPTION_HEIGHT, FRAME_HEIGHT, FRAME_WIDTH, PlateCard } from "../cards.tsx";
+import { PlateCard } from "../cards.tsx";
 import type { ConceptProps } from "../concept.ts";
-import { hueRgb, type Item, itemById, items } from "../content.ts";
-import { type Box, PHONE_WIDTH, plateSize, random, relax } from "../layout.ts";
+import { hueRgb, items } from "../content.ts";
+import { PHONE_WIDTH, random } from "../layout.ts";
 import { ease, useLoop, useSize } from "../loop.ts";
 import { Fluid } from "./fluid.ts";
+import { type Placed, pondDesktop, pondPhone } from "./homes.ts";
 import { Water } from "./water.ts";
-
-/** The place of each item in the pond, as a part of the width and the height. The layout then removes the overlaps. */
-const homes: Record<string, [number, number]> = {
-  me: [0.12, 0.24],
-  systems: [0.37, 0.3],
-  client: [0.66, 0.32],
-  lag: [0.9, 0.22],
-  "page-lifecycle-tracker": [0.52, 0.08],
-  crawler: [0.2, 0.47],
-  "async-browser-context": [0.46, 0.55],
-  proof: [0.1, 0.66],
-  ireko: [0.3, 0.74],
-  render: [0.53, 0.78],
-  vex: [0.76, 0.73],
-  now: [0.93, 0.58],
-  meter: [0.95, 0.9],
-  "ste-lint": [0.25, 0.04],
-  optional: [0.78, 0.04],
-  cue: [0.06, 0.95],
-  "otel-ts": [0.3, 0.97],
-  template: [0.98, 0.42],
-};
-
-/** The order of the cards in the column of the phone layout. The pebbles follow. */
-const phoneOrder = ["me", "systems", "client", "crawler", "lag", "page-lifecycle-tracker", "async-browser-context", "vex", "render", "ireko", "proof", "now", "meter"];
-
-/** A box of the layout, with the scale of its card from the base size. */
-interface Placed extends Box {
-  readonly item: Item;
-  readonly k: number;
-}
 
 interface Body extends Placed {
   readonly hx: number;
@@ -49,52 +19,6 @@ interface Body extends Placed {
   hover: number;
 }
 
-interface Plan {
-  readonly boxes: Placed[];
-  /** The height of the content. On a phone, the content is taller than the screen, and the pond scrolls. */
-  readonly height: number;
-  readonly phone: boolean;
-}
-
-function desktopLayout(width: number, height: number): Plan {
-  const area = items.reduce((sum, item) => {
-    const size = plateSize(item);
-    return sum + size.w * size.h;
-  }, 0);
-  const scale = Math.min(1.15, Math.max(0.5, Math.sqrt((0.5 * width * height) / area)));
-  const boxes: Placed[] = items.map((item) => {
-    const size = plateSize(item);
-    const [fx, fy] = homes[item.id] ?? [0.5, 0.5];
-    return { id: item.id, item, k: scale, x: fx * width, y: fy * height, w: size.w * scale, h: size.h * scale };
-  });
-  relax(boxes, width, height, 18 * scale, 20, 400);
-  return { boxes, height, phone: false };
-}
-
-function phoneLayout(width: number): Plan {
-  const margin = 16;
-  const gap = 18;
-  const column = width - margin * 2;
-  const boxes: Placed[] = [];
-  let y = margin;
-  for (const id of phoneOrder) {
-    const item = itemById(id);
-    if (!item) continue;
-    const base = plateSize(item);
-    // On a phone, each site has the full width and a caption at the normal size.
-    const k = item.kind === "site" ? 1 : column / base.w;
-    const h = item.kind === "site" ? (column * FRAME_HEIGHT) / FRAME_WIDTH + CAPTION_HEIGHT : base.h * k;
-    boxes.push({ id, item, k, x: width / 2, y: y + h / 2, w: column, h });
-    y += h + gap;
-  }
-  for (const item of items) {
-    if (item.kind !== "pebble") continue;
-    boxes.push({ id: item.id, item, k: 1, x: width / 2, y: y + 29, w: column, h: 58 });
-    y += 58 + 12;
-  }
-  return { boxes, height: y + margin + 40, phone: true };
-}
-
 /**
  * The pond: a fluid fills the page, and the cards float on it. The current carries the cards, and springs pull them back to their places.
  * The cursor stirs the water. The cards push the water when they move.
@@ -105,7 +29,7 @@ export function Pond({ onOpen, reduced, paused }: ConceptProps): ReactElement {
   const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { width, height } = useSize(rootRef);
-  const plan = useMemo(() => (width === 0 ? null : width < PHONE_WIDTH ? phoneLayout(width) : desktopLayout(width, height)), [width, height]);
+  const plan = useMemo(() => (width === 0 ? null : width < PHONE_WIDTH ? pondPhone(items, width) : pondDesktop(items, width, height)), [width, height]);
   const elements = useRef(new Map<string, HTMLElement>());
   const state = useRef<{ fluid: Fluid; water: Water | null; bodies: Body[]; start: number; nextAmbient: number } | null>(null);
   const pointer = useRef({ x: 0, y: 0, px: 0, py: 0, inside: false, down: false, splash: false });

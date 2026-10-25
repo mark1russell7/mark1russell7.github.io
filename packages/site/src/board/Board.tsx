@@ -4,66 +4,13 @@ import type { ConceptProps } from "../concept.ts";
 import { itemById, items } from "../content.ts";
 import { PHONE_WIDTH } from "../layout.ts";
 import { useLoop, useSize } from "../loop.ts";
+import { desktopWorld, type Place, phoneWorld, type World } from "./places.ts";
 
-/** The place and the size of an item on the board, in world units: x, y, width and height. */
-type Place = readonly [number, number, number, number];
+/** The board on a large screen. The places come from the items, so a new site gets a place without a change here. */
+const desktop: World = desktopWorld(items);
 
-interface World {
-  readonly places: Readonly<Record<string, Place>>;
-  readonly width: number;
-  readonly height: number;
-  readonly phone: boolean;
-}
-
-/** The board on a large screen: the featured sites in the middle of the first row, and the other sites in the second row. */
-const desktop: World = {
-  places: {
-    me: [0, 0, 420, 370],
-    systems: [500, 0, 880, 637],
-    client: [1460, 0, 880, 637],
-    now: [2420, 0, 420, 300],
-    meter: [0, 410, 420, 262],
-    proof: [2420, 340, 420, 241],
-    crawler: [0, 760, 372, 307],
-    lag: [411, 760, 372, 307],
-    "page-lifecycle-tracker": [823, 760, 372, 307],
-    "async-browser-context": [1234, 760, 372, 307],
-    vex: [1645, 760, 372, 307],
-    render: [2057, 760, 372, 307],
-    ireko: [2468, 760, 372, 307],
-    "ste-lint": [0, 1147, 536, 96],
-    optional: [576, 1147, 536, 96],
-    cue: [1152, 1147, 536, 96],
-    "otel-ts": [1728, 1147, 536, 96],
-    template: [2304, 1147, 536, 96],
-  },
-  width: 2840,
-  height: 1243,
-  phone: false,
-};
-
-/** This function makes the board of a phone: one column of cards, with the pebbles at the end. */
-function phoneWorld(): World {
-  const width = 600;
-  const gap = 40;
-  const heights: Record<string, number> = { me: 529, proof: 344, now: 344, meter: 374 };
-  const order = ["me", "systems", "client", "crawler", "lag", "page-lifecycle-tracker", "async-browser-context", "vex", "render", "ireko", "proof", "now", "meter"];
-  const places: Record<string, Place> = {};
-  let y = 0;
-  for (const id of order) {
-    const h = heights[id] ?? 462;
-    places[id] = [0, y, width, h];
-    y += h + gap;
-  }
-  for (const item of items) {
-    if (item.kind !== "pebble") continue;
-    places[item.id] = [0, y, width, 96];
-    y += 96 + 20;
-  }
-  return { places, width, height: y, phone: true };
-}
-
-const phone: World = phoneWorld();
+/** The board on a phone: one column of cards. */
+const phone: World = phoneWorld(items);
 
 const MIN_ZOOM = 0.12;
 const MAX_ZOOM = 3;
