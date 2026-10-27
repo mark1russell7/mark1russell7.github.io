@@ -1,6 +1,6 @@
 // This script finds the public repositories of mark1russell7 that have a GitHub Pages site, and writes them to
 // src/discovered.json. The Pages workflow starts it before each build, and the build gives each site that
-// content.ts does not describe an automatic card. A daily schedule rebuilds the pool, so a new site shows in a day.
+// content.ts does not describe an automatic card. An hourly check rebuilds the pool when the list changed, so a new site shows in an hour.
 //   node packages/site/scripts/discover.ts           (GITHUB_TOKEN is optional, it raises the rate limit)
 import { readFileSync, writeFileSync } from "node:fs";
 

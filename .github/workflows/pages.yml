@@ -7,22 +7,49 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-  # Each day, the build finds the Pages sites of the other repositories again, so a new site shows in the pool.
+  # A repository can ask for a new discovery when its site changes (event type pages-site).
+  repository_dispatch:
+    types: [pages-site]
+  # Each hour, the check job finds the Pages sites of the other repositories again. It deploys only when the list
+  # changed, so a new site shows in the pool in an hour, and an hour with no change costs one short job.
   schedule:
-    - cron: "17 9 * * *"
+    - cron: "17 * * * *"
 
 # The build job runs the install scripts of the dependencies, so it can only read the repository.
 # Only the deploy job can write to GitHub Pages and get an OIDC token.
 permissions:
   contents: read
 
-# One deployment at a time. A newer push cancels a deployment that waits.
-concurrency:
-  group: pages
-  cancel-in-progress: true
-
 jobs:
+  # The hourly run only: compare a new discovery with the list of the live site.
+  check:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.compare.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 26
+      - run: node packages/site/scripts/discover.ts
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - id: compare
+        run: |
+          if curl -fsS https://mark1russell7.github.io/discovered.json -o live.json && cmp -s <(jq -S . live.json) <(jq -S . packages/site/src/discovered.json); then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::The list of sites changed, so this run deploys."
+          fi
+
   build:
+    needs: check
+    # Each push, dispatch and repository dispatch builds. The hourly run builds only when the list changed.
+    if: ${{ !cancelled() && (github.event_name != 'schedule' || needs.check.outputs.changed == 'true') }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -38,12 +65,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - run: pnpm --filter @portfolio/site build
+      - run: node packages/site/scripts/manifest.ts
       - uses: actions/upload-pages-artifact@v5
         with:
           path: packages/site/dist
 
   deploy:
     needs: build
+    # One deployment at a time. A deployment that runs is not cancelled.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     permissions:
       pages: write

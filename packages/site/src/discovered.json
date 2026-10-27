@@ -20,6 +20,11 @@
     "description": "polite-crawler: a polite web crawler for research and AI agents. Fetch once, keep it, read it many times. robots.txt, one request per site, full-text search, MCP server."
   },
   {
+    "repo": "highways",
+    "path": "/highways/",
+    "description": "Edge routing for large graphs: fractal highways, bundles by rule, plugs and zoom levels, with a benchmark of the strategies."
+  },
+  {
     "repo": "ireko",
     "path": "/ireko/",
     "description": "Composable graph and tree layout for TypeScript. Select a layout for each container, and get boxes and routed edges for SVG, Canvas, the DOM or React Flow."
@@ -28,6 +33,11 @@
     "repo": "lag",
     "path": "/lag/",
     "description": "Main-thread lag monitoring for browser apps: event loop lag, long tasks, Long Animation Frames, hangs, INP and Web Vitals from real users, as OpenTelemetry metrics, events and traces."
+  },
+  {
+    "repo": "packing",
+    "path": "/packing/",
+    "description": "Rectangle packing for layouts: many strategies, an algebra of measures, benchmarks in CI."
   },
   {
     "repo": "page-lifecycle-tracker",
