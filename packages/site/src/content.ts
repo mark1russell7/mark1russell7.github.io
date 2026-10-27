@@ -187,6 +187,18 @@ export const curated: readonly Site[] = [
     focus: ".stage",
     repo: `${github}/highways`,
   },
+  {
+    kind: "site",
+    id: "packing",
+    name: "packing",
+    path: "/packing/",
+    tagline: "Rectangle packing, live",
+    blurb: "It packs rectangles into a container with many strategies, and measures each layout with an algebra. Change the strategy, the sort and the width, and compare the layouts in your browser.",
+    hue: "#7FDBCA",
+    tier: 2,
+    focus: "#stages",
+    repo: `${github}/packing`,
+  },
 ];
 
 /**
