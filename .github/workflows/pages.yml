@@ -72,6 +72,8 @@ jobs:
 
   deploy:
     needs: build
+    # Without this condition, the deploy skips when the check job skipped, also after a build that passed.
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
     # One deployment at a time. A deployment that runs is not cancelled.
     concurrency:
       group: pages
