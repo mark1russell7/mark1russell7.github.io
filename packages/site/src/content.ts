@@ -199,6 +199,18 @@ export const curated: readonly Site[] = [
     focus: "#stages",
     repo: `${github}/packing`,
   },
+  {
+    kind: "site",
+    id: "layout-contract",
+    name: "layout-contract",
+    path: "/layout-contract/",
+    tagline: "One benchmark for packing and highways",
+    blurb: "It is the shared contract of the packing and highways layout engines. It shows the newest joint benchmark, an explorer of the strategy space, the sweeps and the news of the two engines.",
+    hue: "#E8A87C",
+    tier: 2,
+    focus: "#bench",
+    repo: `${github}/layout-contract`,
+  },
 ];
 
 /**
