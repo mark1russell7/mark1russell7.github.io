@@ -1,6 +1,7 @@
-# Builds packages/site and publishes it to GitHub Pages at https://mark1russell7.github.io/.
-# To use this workflow, set the Pages source of the repository to "GitHub Actions"
-# (Settings > Pages).
+# Builds packages/site and publishes it to GitHub Pages at https://mark1russell7.github.io/, with the shared
+# Pages workflow of mark1russell7 (reusable-pages.yml of mark1russell7/template, its CI.md). It adds the
+# Releases page and the Status page (releases/, status/ and their data/*.json).
+# To use this workflow, set the Pages source of the repository to "GitHub Actions" (Settings > Pages).
 name: Pages
 
 on:
@@ -12,13 +13,11 @@ on:
     types: [pages-site]
   # Each hour, the check job finds the Pages sites of the other repositories again. It deploys only when the list
   # changed, so a new site shows in the pool in an hour, and an hour with no change costs one short job.
+  # The run at 06:17 always deploys, so the Status page shows the open pull requests of the day.
   schedule:
     - cron: "17 * * * *"
 
-# The build job runs the install scripts of the dependencies, so it can only read the repository.
-# Only the deploy job can write to GitHub Pages and get an OIDC token.
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   # The hourly run only: compare a new discovery with the list of the live site.
@@ -39,52 +38,44 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
       - id: compare
         run: |
-          if curl -fsS https://mark1russell7.github.io/discovered.json -o live.json && cmp -s <(jq -S . live.json) <(jq -S . packages/site/src/discovered.json); then
+          if [ "$(date -u +%H)" = "06" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::The daily run deploys, for the Status page."
+          elif curl -fsS https://mark1russell7.github.io/discovered.json -o live.json && cmp -s <(jq -S . live.json) <(jq -S . packages/site/src/discovered.json); then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "::notice::The list of sites changed, so this run deploys."
           fi
 
-  build:
+  pages:
     needs: check
-    # Each push, dispatch and repository dispatch builds. The hourly run builds only when the list changed.
+    # Each push, dispatch and repository dispatch builds. The hourly run builds only when the list changed, or at 06:17.
     if: ${{ !cancelled() && (github.event_name != 'schedule' || needs.check.outputs.changed == 'true') }}
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 26
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: node packages/site/scripts/discover.ts
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-      - run: pnpm --filter @portfolio/site build
-      - run: node packages/site/scripts/manifest.ts
-      - uses: actions/upload-pages-artifact@v5
-        with:
-          path: packages/site/dist
-
-  deploy:
-    needs: build
-    # Without this condition, the deploy skips when the check job skipped, also after a build that passed.
-    if: ${{ !cancelled() && needs.build.result == 'success' }}
-    # One deployment at a time. A deployment that runs is not cancelled.
+    # One deployment at a time, on this job only: an hourly run with no change does not cancel a deployment.
     concurrency:
       group: pages
       cancel-in-progress: false
-    runs-on: ubuntu-latest
+    uses: mark1russell7/template/.github/workflows/reusable-pages.yml@072c68a9d4b3fbaea886ad60ae54b6ebbef42bde # main
+    # The build job of the shared workflow gets only the read permissions. Only its deploy job,
+    # which runs no code of the repository, writes to Pages.
     permissions:
+      contents: read
+      actions: read
+      issues: read
+      pull-requests: read
+      checks: read
+      statuses: read
       pages: write
       id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v5
+    with:
+      # The discovery needs the token, for the list of the repositories with a Pages site.
+      github-token: true
+      build: |
+        node packages/site/scripts/discover.ts
+        pnpm --filter @portfolio/site build
+        node packages/site/scripts/manifest.ts
+      out: packages/site/dist
+      # The Releases page and the Status page, at the root of the domain
+      base: /
+      site-name: mark1russell7.github.io
