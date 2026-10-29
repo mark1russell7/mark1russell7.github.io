@@ -211,6 +211,18 @@ export const curated: readonly Site[] = [
     focus: "#bench",
     repo: `${github}/layout-contract`,
   },
+  {
+    kind: "site",
+    id: "codeatlas",
+    name: "codeatlas",
+    path: "/codeatlas/",
+    tagline: "A map of the copied code",
+    blurb: "It finds the code that is the same in 37 public repositories. It shows the clone classes that go across repositories, the shapes of the functions, the shared names and the packages by purpose.",
+    hue: "#E05A8A",
+    tier: 2,
+    focus: "#app",
+    repo: `${github}/codeatlas`,
+  },
 ];
 
 /**
