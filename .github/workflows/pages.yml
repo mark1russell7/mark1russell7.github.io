@@ -79,3 +79,5 @@ jobs:
       # The Releases page and the Status page, at the root of the domain
       base: /
       site-name: mark1russell7.github.io
+      # The Status page shows this roadmap. The rule roadmap-parses reads it on each PR.
+      roadmap: docs/ROADMAP.md
