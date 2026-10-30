@@ -8,7 +8,6 @@
     "allowImportingTsExtensions": true,
     "rootDir": "${configDir}"
   },
-  // Every .ts file of the package: the site, its tests, the build scripts and the configs (the fail-closed audit of 10-30).
-  "include": ["src/**/*", "scripts/**/*", "*.config.ts"],
-  "exclude": ["node_modules", "dist"]
+  // The site, the build scripts and the configs. tsconfig.test.json checks the tests.
+  "include": ["src/**/*", "scripts/**/*", "*.config.ts"]
 }
