@@ -1,5 +1,5 @@
 import react from "@vitejs/plugin-react";
-import { defineConfig, type Plugin, type ProxyOptions } from "vite";
+import { defineConfig, type Plugin, type ProxyOptions, type UserConfig } from "vite";
 import { bio, links, pebbles, sites } from "./src/content.ts";
 
 const origin = "https://mark1russell7.github.io";
@@ -107,8 +107,9 @@ function seo(): Plugin {
   };
 }
 
-export default defineConfig({
+const config: UserConfig = defineConfig({
   plugins: [react(), seo()],
   server: { proxy },
   preview: { proxy },
 });
+export default config;
