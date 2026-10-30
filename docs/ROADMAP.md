@@ -30,5 +30,5 @@ The statuses are `done`, `in progress`, `next` and `later`.
 | P10 | The AI review of pull requests, the shared security scans and Renovate | done (2026-10-25) | P1 | #5, #6, #7 |
 | P11 | The shared Pages workflow, with the Status and Releases pages | done (2026-10-29) | P8 | #33 |
 | P12 | The gates fail closed: `CI OK`, `Security OK`, a type check of all the code and a guard against an empty list of sites | done (2026-10-30) | P10 | #36, #37, #40, #41 |
-| P13 | The shared conventions check, version 0.6.0, with the rule `roadmap-parses` | done (2026-10-30) | P12 | #45 |
+| P13 | The shared conventions check, version 0.7.0, with the rule `roadmap-parses` | done (2026-10-30) | P12 | #45, #49 |
 | P14 | This roadmap, on the Status page and in the tracker of the fleet | done (2026-10-30) | P11, P13 | #47 |
