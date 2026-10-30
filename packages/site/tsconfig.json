@@ -5,7 +5,10 @@
     "noEmit": true,
     "composite": false,
     "incremental": false,
-    "allowImportingTsExtensions": true
+    "allowImportingTsExtensions": true,
+    "rootDir": "${configDir}"
   },
-  "include": ["src/**/*"]
+  // Every .ts file of the package: the site, its tests, the build scripts and the configs (the fail-closed audit of 10-30).
+  "include": ["src/**/*", "scripts/**/*", "*.config.ts"],
+  "exclude": ["node_modules", "dist"]
 }

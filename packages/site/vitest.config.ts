@@ -1,8 +1,8 @@
-import { defineConfig } from "vitest/config";
+import { defineConfig, type ViteUserConfig } from "vitest/config";
 
-export default defineConfig({
+const config: ViteUserConfig = defineConfig({
   test: {
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
-    passWithNoTests: true,
   },
 });
+export default config;

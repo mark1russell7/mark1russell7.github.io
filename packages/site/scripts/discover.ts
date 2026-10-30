@@ -10,7 +10,8 @@ const out = new URL("../src/discovered.json", import.meta.url);
 interface Repo { name: string; description: string | null; homepage: string | null; has_pages: boolean; private: boolean; fork: boolean; archived: boolean }
 
 const headers: Record<string, string> = { accept: "application/vnd.github+json", "user-agent": "portfolio-discover" };
-if (process.env.GITHUB_TOKEN) headers.authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+const token = process.env["GITHUB_TOKEN"];
+if (token) headers["authorization"] = `Bearer ${token}`;
 
 const repos: Repo[] = [];
 for (let page = 1; page < 20; page++) {
@@ -28,6 +29,12 @@ const found = repos
   .filter((r) => r.has_pages && !r.private && !r.fork && !r.archived && r.name !== `${owner}.github.io`)
   .map((r) => ({ repo: r.name, path: `/${r.name}/`, description: (r.description ?? "").trim() }))
   .sort((a, b) => a.repo.localeCompare(b.repo));
+
+// No site at all means a wrong answer, not a real list: keep the old list and fail, so the build does not drop every automatic card.
+if (found.length === 0) {
+  console.error(`discover: GitHub listed ${repos.length} repositories and none with a Pages site; expected at least one. src/discovered.json stays as it is.`);
+  process.exit(1);
+}
 
 const before = JSON.parse(readFileSync(out, "utf8")) as { repo: string }[];
 const known = new Set(before.map((r) => r.repo));
