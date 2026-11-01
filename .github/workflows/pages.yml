@@ -15,9 +15,13 @@ on:
   # changed, so a new site shows in the pool in an hour, and an hour with no change costs one short job.
   # The run at 06:17 always deploys, so the Status page shows the open pull requests of the day.
   schedule:
-    - cron: "17 * * * *"
+    - cron: "13 * * * *"
 
 permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   # The hourly run only: compare a new discovery with the list of the live site.
