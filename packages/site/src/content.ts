@@ -223,6 +223,18 @@ export const curated: readonly Site[] = [
     focus: "#app",
     repo: `${github}/codeatlas`,
   },
+  {
+    kind: "site",
+    id: "rigor",
+    name: "rigor",
+    path: "/rigor/",
+    tagline: "Seeded numbers, measured claims",
+    blurb: "It gives shared libraries for measured work: seeded generators and statistics now, with gates, test generation, chaos and load next. Type a seed, and the page draws the same numbers in each browser.",
+    hue: "#FFD166",
+    tier: 2,
+    focus: "#try",
+    repo: `${github}/rigor`,
+  },
 ];
 
 /**
