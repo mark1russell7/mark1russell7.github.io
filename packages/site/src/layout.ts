@@ -165,8 +165,12 @@ export function relax(
     }
     for (const box of boxes) {
       if (fixed.has(box.id)) continue;
-      box.x = Math.min(width - margin - box.w / 2, Math.max(margin + box.w / 2, box.x));
-      box.y = Math.min(height - margin - box.h / 2, Math.max(margin + box.h / 2, box.y));
+      const x = Math.min(width - margin - box.w / 2, Math.max(margin + box.w / 2, box.x));
+      const y = Math.min(height - margin - box.h / 2, Math.max(margin + box.h / 2, box.y));
+      // A box that an edge moves can overlap a box again, so the next pass must examine it.
+      if (Math.abs(x - box.x) > TOUCH || Math.abs(y - box.y) > TOUCH) moved = true;
+      box.x = x;
+      box.y = y;
     }
     if (!moved) return true;
   }
