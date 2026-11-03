@@ -446,9 +446,11 @@ a {
   overflow: hidden;
 }
 
-.pond-scroll.is-phone {
+.pond-scroll.scrolls {
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(230, 240, 236, 0.25) transparent;
 }
 
 .pond-content {

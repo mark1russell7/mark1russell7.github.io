@@ -1,9 +1,9 @@
 import { describe, expect, test } from "vitest";
 import { desktopWorld, phoneWorld } from "./board/places.ts";
-import { curated, type Discovered, type Item, items, mergeSites, pebbles, tiles } from "./content.ts";
+import { curated, type Discovered, type Item, items, mergeSites, pebbles, sites, tiles } from "./content.ts";
 import discovered from "./discovered.json" with { type: "json" };
-import { columnOrder, rowSizes } from "./layout.ts";
-import { pondDesktop, pondPhone } from "./pond/homes.ts";
+import { columnOrder, plateSize, rowSizes } from "./layout.ts";
+import { MIN_SCALE, pondDesktop, pondPhone } from "./pond/homes.ts";
 import { riverPlan } from "./river/lanes.ts";
 
 /** Two sites that the build can find later. They have no written card. */
@@ -170,28 +170,67 @@ describe("river", () => {
   }
 });
 
+/** This function gives a list with `count` sites: the sites of today, then found sites with no written card. */
+function withSites(count: number): readonly Item[] {
+  const found: Discovered[] = Array.from({ length: Math.max(0, count - sites.length) }, (_, j) => ({
+    repo: `found-site-${j}`,
+    path: `/found-site-${j}/`,
+    description: j % 2 === 0 ? "A site that the build found." : "",
+  }));
+  return [...[...sites, ...mergeSites(curated, found).slice(curated.length)].slice(0, count), ...tiles, ...pebbles];
+}
+
+/** The lists of the pond: today's items, and lists with 24, 40 and 80 sites. */
+const pondLists: readonly (readonly [string, readonly Item[]])[] = [...lists, ...[24, 40, 80].map((count) => [`${count} sites`, withSites(count)] as const)];
+
 describe("pond", () => {
-  for (const [width, height] of desktops) {
-    test.each(lists)(`at ${width} x ${height}, the desktop pond gives each item a box in the area, and no two boxes overlap (%s)`, (_, list) => {
+  test("the lists of the pond have the number of sites in their names", () => {
+    for (const count of [24, 40, 80]) expect(withSites(count).filter((item) => item.kind === "site")).toHaveLength(count);
+  });
+
+  for (const [width, height] of [...desktops, [1920, 1080] as const]) {
+    test.each(pondLists)(`at ${width} x ${height}, the desktop pond gives each item a box in the pond, and no two boxes overlap (%s)`, (_, list) => {
       const plan = pondDesktop(list, width, height);
       expect(plan.boxes.map((box) => box.id).sort()).toEqual(ids(list));
+      expect(plan.height).toBeGreaterThanOrEqual(height);
       const rects = plan.boxes.map((box) => ({ id: box.id, x: box.x - box.w / 2, y: box.y - box.h / 2, w: box.w, h: box.h }));
       for (const rect of rects) {
         expect(rect.x).toBeGreaterThanOrEqual(0);
         expect(rect.y).toBeGreaterThanOrEqual(0);
         expect(rect.x + rect.w).toBeLessThanOrEqual(width + 0.01);
-        expect(rect.y + rect.h).toBeLessThanOrEqual(height + 0.01);
+        expect(rect.y + rect.h).toBeLessThanOrEqual(plan.height + 0.01);
       }
       expect(overlapping(rects)).toEqual([]);
     });
+
+    test.each(pondLists)(`at ${width} x ${height}, the cards of the desktop pond keep the smallest scale, and the important cards are in the first screen (%s)`, (_, list) => {
+      const plan = pondDesktop(list, width, height);
+      for (const box of plan.boxes) {
+        expect(box.k).toBeGreaterThanOrEqual(MIN_SCALE);
+        expect(box.w).toBeCloseTo(plateSize(box.item).w * box.k, 6);
+        expect(box.h).toBeCloseTo(plateSize(box.item).h * box.k, 6);
+      }
+      // The pond is taller than the screen only when the cards are at the smallest scale.
+      if (plan.height > height) expect(plan.boxes[0]!.k).toBe(MIN_SCALE);
+      const first = plan.boxes.filter((box) => box.item.kind === "tile" || (box.item.kind === "site" && box.item.tier === 1));
+      for (const box of first) expect(box.y + box.h / 2).toBeLessThanOrEqual(height + 0.01);
+    });
   }
 
-  test.each(lists)("the phone pond is one column with each item in it (%s)", (_, list) => {
+  test("more sites make the desktop pond taller, and the cards keep their size", () => {
+    const heights = [24, 40, 80].map((count) => pondDesktop(withSites(count), 1440, 836).height);
+    expect(heights[1]!).toBeGreaterThan(heights[0]!);
+    expect(heights[2]!).toBeGreaterThan(heights[1]!);
+    expect(new Set([40, 80].map((count) => pondDesktop(withSites(count), 1440, 836).boxes[0]!.k))).toEqual(new Set([MIN_SCALE]));
+  });
+
+  test.each(pondLists)("the phone pond is one column with each item in it (%s)", (_, list) => {
     const [width] = PHONE;
     const plan = pondPhone(list, width);
     expect(plan.boxes.map((box) => box.id).sort()).toEqual(ids(list));
     const rects = plan.boxes.map((box) => ({ id: box.id, x: box.x - box.w / 2, y: box.y - box.h / 2, w: box.w, h: box.h }));
     expect(overlapping(rects)).toEqual([]);
+    for (const rect of rects) expect([rect.x, rect.x + rect.w]).toEqual([16, width - 16]);
     expect(Math.max(...rects.map((rect) => rect.y + rect.h))).toBeLessThanOrEqual(plan.height);
     expect(columnOrder(list).map((item) => item.id)).toEqual(plan.boxes.map((box) => box.id));
   });
