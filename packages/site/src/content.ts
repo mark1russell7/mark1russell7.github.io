@@ -355,6 +355,18 @@ export const curated: readonly Site[] = [
     focus: "#lab",
     repo: `${github}/typeset`,
   },
+  {
+    kind: "site",
+    id: "concat-src",
+    name: "concat-src",
+    path: "/concat-src/",
+    tagline: "A folder of source in one Markdown file",
+    blurb: "It walks a folder and keeps the source files by extension and by end pattern. Then it writes the rules, a directory tree and each kept file in a code fence into one Markdown file. The site makes the catalog of a sample project or of your own folder, and the files stay in your browser.",
+    hue: "#C9A0FF",
+    tier: 2,
+    focus: "#try",
+    repo: `${github}/concat-src`,
+  },
 ];
 
 /**
