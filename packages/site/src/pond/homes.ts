@@ -75,7 +75,7 @@ export function pondDesktop(list: readonly Item[], width: number, height: number
     const size = plateSize(item);
     return sum + size.w * size.h;
   }, 0);
-  const scale = Math.min(1.15, Math.max(0.5, Math.sqrt((0.5 * width * height) / area)));
+  const scale = Math.min(1.15, Math.max(0.4, Math.sqrt((0.5 * width * height) / area)));
   const spots = homes(list);
   const boxes: Placed[] = list.map((item) => {
     const size = plateSize(item);
