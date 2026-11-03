@@ -367,6 +367,30 @@ export const curated: readonly Site[] = [
     focus: "#try",
     repo: `${github}/concat-src`,
   },
+  {
+    kind: "site",
+    id: "cue",
+    name: "cue",
+    path: "/cue/",
+    tagline: "Package files from a list of features",
+    blurb: "Each package lists its features, for example ts, node, react and vitest. The CLI cue-config adds the features that they need. Then CUE unifies the file of each feature into package.json, tsconfig.json and .gitignore. The 30 packages of client use it. The playground shows each line that generate writes, and the feature that gave the line.",
+    hue: "#3FD4DB",
+    tier: 2,
+    focus: "#playground",
+    repo: `${github}/cue`,
+  },
+  {
+    kind: "site",
+    id: "docker-mongo",
+    name: "docker-mongo",
+    path: "/docker-mongo/",
+    tagline: "A MongoDB container from eight variables",
+    blurb: "A MongoDB 8.0 container for Docker Compose, with TypeScript functions that connect, initialize and seed. Eight environment variables give the connection string and the Compose file, and the file never holds the password. The site shows each step of init and seed as a mongosh command, with no server.",
+    hue: "#F25C6E",
+    tier: 2,
+    focus: "#try",
+    repo: `${github}/docker-mongo`,
+  },
 ];
 
 /**
@@ -406,7 +430,6 @@ export const tiles: readonly Tile[] = [
 ];
 
 export const pebbles: readonly Pebble[] = [
-  { kind: "pebble", id: "cue", name: "cue", blurb: "Shared TS config schemas", hue: "#93D86C", href: `${github}/cue` },
   { kind: "pebble", id: "otel-ts", name: "otel-ts", blurb: "OpenTelemetry in one call", hue: "#F2AA3C", href: `${github}/otel-ts` },
 ];
 
