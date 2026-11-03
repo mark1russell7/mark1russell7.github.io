@@ -373,7 +373,7 @@ export const curated: readonly Site[] = [
     name: "cue",
     path: "/cue/",
     tagline: "Package files from a list of features",
-    blurb: "Each package lists its features, for example ts, node, react and vitest. The CLI cue-config adds the features that they need. Then CUE unifies the file of each feature into package.json, tsconfig.json and .gitignore. The 30 packages of client use it. The playground shows each line that generate writes, and the feature that gave the line.",
+    blurb: "Each package lists its features, for example ts, node, react and vitest. The CLI cue-config adds the features that they need. Then CUE unifies the file of each feature into package.json, tsconfig.json and .gitignore. Each package of the client monorepo uses it. The playground shows each line that generate writes, and the feature that gave the line.",
     hue: "#3FD4DB",
     tier: 2,
     focus: "#playground",
