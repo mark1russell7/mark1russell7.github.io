@@ -22,7 +22,9 @@ interface Body extends Placed {
 /**
  * The pond: a fluid fills the page, and the cards float on it. The current carries the cards, and springs pull them back to their places.
  * The cursor stirs the water. The cards push the water when they move.
- * On a phone, the cards make a column that scrolls over the water. The scroll moves the cards through the water, and a tap makes a splash.
+ *
+ * On a phone, the cards make a column that scrolls over the water. A tap makes a splash.
+ * When the cards do not fit in one screen, the pond scrolls. The scroll moves the cards through the water.
  */
 export function Pond({ onOpen, reduced, paused }: ConceptProps): ReactElement {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -30,6 +32,8 @@ export function Pond({ onOpen, reduced, paused }: ConceptProps): ReactElement {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { width, height } = useSize(rootRef);
   const plan = useMemo(() => (width === 0 ? null : width < PHONE_WIDTH ? pondPhone(items, width) : pondDesktop(items, width, height)), [width, height]);
+  // A pond with more cards than one screen holds is taller than the screen, and it scrolls. This is true on a phone and on a large screen.
+  const scrolls = plan !== null && plan.height > height + 0.5;
   const elements = useRef(new Map<string, HTMLElement>());
   const state = useRef<{ fluid: Fluid; water: Water | null; bodies: Body[]; start: number; nextAmbient: number } | null>(null);
   const pointer = useRef({ x: 0, y: 0, px: 0, py: 0, inside: false, down: false, splash: false });
@@ -161,7 +165,7 @@ export function Pond({ onOpen, reduced, paused }: ConceptProps): ReactElement {
       const stiffness = (plan.phone ? 8 : 5) + 40 * b.hover;
       const drag = (plan.phone ? 1.4 : 2.2) * (1 - b.hover);
       b.vx += (stiffness * (b.hx - b.x) + drag * (flow.x - b.vx)) * dt;
-      b.vy += (stiffness * (b.hy - b.y) + drag * (flow.y - b.vy) * (plan.phone ? 0.4 : 1)) * dt;
+      b.vy += (stiffness * (b.hy - b.y) + drag * (flow.y - b.vy) * (scrolls ? 0.4 : 1)) * dt;
       const damping = Math.exp(-(1.1 + 9 * b.hover) * dt);
       b.vx *= damping;
       b.vy *= damping;
@@ -286,7 +290,7 @@ export function Pond({ onOpen, reduced, paused }: ConceptProps): ReactElement {
   return (
     <div className="concept pond" ref={rootRef}>
       <canvas ref={canvasRef} className="pond-water" aria-hidden="true" />
-      <div className={plan?.phone ? "pond-scroll is-phone" : "pond-scroll"} ref={scrollRef}>
+      <div className={scrolls ? "pond-scroll scrolls" : "pond-scroll"} ref={scrollRef}>
         <div className="pond-content" style={{ height: plan?.height ?? 0 }}>
           {plan
             ? plan.boxes.map((box) => (
