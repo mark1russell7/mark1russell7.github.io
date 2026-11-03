@@ -319,6 +319,18 @@ export const curated: readonly Site[] = [
     focus: "main",
     repo: `${github}/template`,
   },
+  {
+    kind: "site",
+    id: "typeset",
+    name: "typeset",
+    path: "/typeset/",
+    tagline: "Text widths from the font tables",
+    blurb: "It reads the glyph widths and the kerning pairs from the tables of a font file. It calculates the width of a text without a draw operation. The site compares each width with canvas measureText.",
+    hue: "#7058EC",
+    tier: 2,
+    focus: "#lab",
+    repo: `${github}/typeset`,
+  },
 ];
 
 /**
