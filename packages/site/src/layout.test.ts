@@ -114,7 +114,7 @@ describe("board", () => {
     expect(world.places["now"]).toEqual([2420, 0, 420, 300]);
     expect(world.places["proof"]).toEqual([2420, 340, 420, 241]);
     const row = pebbles.map((pebble) => world.places[pebble.id]!);
-    expect(row.map(([x]) => x)).toEqual([864, 1440]);
+    expect(row.map(([x]) => x)).toEqual([1152]);
     expect(new Set(row.map(([, y]) => y)).size).toBe(1);
   });
 

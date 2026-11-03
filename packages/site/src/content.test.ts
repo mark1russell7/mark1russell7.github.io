@@ -1,12 +1,17 @@
 import { describe, expect, test } from "vitest";
 import discovered from "./discovered.json" with { type: "json" };
-import { autoSite, curated, mergeSites, sites } from "./content.ts";
+import { autoSite, curated, items, mergeSites, sites } from "./content.ts";
 
 describe("sites", () => {
   test("each found site has a card, and the written cards come first", () => {
     const paths = new Set(sites.map((site) => site.path.toLowerCase()));
     for (const found of discovered) expect(paths.has(found.path.toLowerCase())).toBe(true);
     expect(sites.slice(0, curated.length)).toEqual(curated);
+  });
+
+  test("each item has its own identifier", () => {
+    const ids = items.map((item) => item.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 
   test("a found site with a written card gets no second card", () => {
