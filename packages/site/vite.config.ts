@@ -1,6 +1,7 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin, type ProxyOptions, type UserConfig } from "vite";
 import { bio, links, pebbles, sites } from "./src/content.ts";
+import posterIds from "./src/posters.json" with { type: "json" };
 
 const origin = "https://mark1russell7.github.io";
 
@@ -107,8 +108,23 @@ function seo(): Plugin {
   };
 }
 
+/**
+ * This plugin asks for the posters of the first two cards in the HTML, before the scripts start.
+ * The page needs both posters at each width, so this adds no bytes. The Pages workflow writes the list of posters before the build.
+ */
+function preloadPosters(): Plugin {
+  const first = sites.filter((site) => posterIds.includes(site.id)).slice(0, 2);
+  const links = first.map((site) => `<link rel="preload" as="image" href="/posters/${site.id}.webp" type="image/webp" fetchpriority="high" />`);
+  return {
+    name: "portfolio-preload-posters",
+    transformIndexHtml(html) {
+      return html.replace("</head>", `${links.map((link) => `  ${link}\n`).join("")}  </head>`);
+    },
+  };
+}
+
 const config: UserConfig = defineConfig({
-  plugins: [react(), seo()],
+  plugins: [react(), seo(), preloadPosters()],
   server: { proxy },
   preview: { proxy },
 });
