@@ -113,8 +113,13 @@ describe("board", () => {
     expect(world.places["meter"]).toEqual([0, 410, 420, 262]);
     expect(world.places["now"]).toEqual([2420, 0, 420, 300]);
     expect(world.places["proof"]).toEqual([2420, 340, 420, 241]);
-    const row = pebbles.map((pebble) => world.places[pebble.id]!);
-    expect(row.map(([x]) => x)).toEqual([1152]);
+  });
+
+  test("the pebbles make one row at the end of the desktop board", () => {
+    const extra = ["a", "b"].map((id): Item => ({ kind: "pebble", id, name: id, blurb: "x", hue: "#F2AA3C", href: "https://example.com" }));
+    const world = desktopWorld([...items, ...extra]);
+    const row = extra.map((pebble) => world.places[pebble.id]!);
+    expect(row.map(([x]) => x)).toEqual([864, 1440]);
     expect(new Set(row.map(([, y]) => y)).size).toBe(1);
   });
 

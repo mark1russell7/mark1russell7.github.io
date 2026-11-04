@@ -403,6 +403,78 @@ export const curated: readonly Site[] = [
     focus: "#try",
     repo: `${github}/docker-sqlite`,
   },
+  {
+    kind: "site",
+    id: "funk",
+    name: "Funk",
+    path: "/Funk/",
+    tagline: "Small functional parts for TypeScript",
+    blurb: "Small functional parts for TypeScript, with no dependencies. It has Either and Optional for failures and absent values, a collection on arrays and sets, and a sponge that fills an object in steps. It is not on npm. The site starts the real source in your browser. Fail a step of a chain, and the later steps do not start.",
+    hue: "#F2C14E",
+    tier: 2,
+    focus: "#railway",
+    repo: `${github}/Funk`,
+  },
+  {
+    kind: "site",
+    id: "grafana-infra",
+    name: "grafana-infra",
+    path: "/grafana-infra/",
+    tagline: "Frontend observability in Docker Compose",
+    blurb: "A Docker Compose stack for frontend observability, with Alloy, Mimir, Loki, Tempo, Pyroscope and Grafana. The lag library uses it for development and integration tests, and the stack provisions the Lag Monitor dashboard. The site reads the real config files, but the stack does not operate on the page. Follow a signal to Grafana, find which panel reads which rule, and change a port.",
+    hue: "#F47A3F",
+    tier: 2,
+    focus: "#map",
+    repo: `${github}/grafana-infra`,
+  },
+  {
+    kind: "site",
+    id: "logger",
+    name: "Logger",
+    path: "/Logger/",
+    tagline: "A TypeScript logger with no dependencies",
+    blurb: "A logger for TypeScript with no dependencies. It has five levels, child loggers, three formatters, and console, memory, callback and custom transports. If a transport fails, the next transport still gets the record. The site starts the real package in your browser. Send a record, and follow it through the filter, the formatter and the transports.",
+    hue: "#9AD1D4",
+    tier: 2,
+    focus: "#lab",
+    repo: `${github}/Logger`,
+  },
+  {
+    kind: "site",
+    id: "otel-ts",
+    name: "otel-ts",
+    path: "/otel-ts/",
+    tagline: "OpenTelemetry for web apps in one call",
+    blurb: "OpenTelemetry for TypeScript web apps from one init() call, with Grafana Faro as an option. It starts traces, metrics and logs, and it sends them with OTLP over HTTP. It flushes the data each time the page becomes hidden. The site starts the real init() in your browser and shows each span, metric and log record that leaves the package. The data stays in your browser.",
+    hue: "#7B9BF0",
+    tier: 2,
+    focus: "#lab",
+    repo: `${github}/otel-ts`,
+  },
+  {
+    kind: "site",
+    id: "pr-opener",
+    name: "pr-opener",
+    path: "/pr-opener/",
+    tagline: "Open a pull request from the URL bar",
+    blurb: "A Chrome extension. Type pull in the URL bar, press Tab, type a pull request number and press Enter. The options page keeps a list of repositories, and the first one is the default. It is not in the Chrome Web Store, so you build it and load the folder. The site starts the real extension code in your browser, with a drawn URL bar.",
+    hue: "#5CC8A1",
+    tier: 2,
+    focus: "#try",
+    repo: `${github}/pr-opener`,
+  },
+  {
+    kind: "site",
+    id: "ts-base",
+    name: "ts-base",
+    path: "/ts-base/",
+    tagline: "Strict tsconfig presets, traced to each file",
+    blurb: "Strict tsconfig presets that build on each other: one file has the shared rules, and small files add ESM, CommonJS or frontend settings. Its CLI writes a tsconfig.json with one extends line and sets up package.json. The site traces each setting of a merged tsconfig to its file. Switch a strict flag, and read the code that tsc refuses. The results come from the real compiler at build time.",
+    hue: "#6BB5FF",
+    tier: 2,
+    focus: "#try",
+    repo: `${github}/ts-base`,
+  },
 ];
 
 /**
@@ -441,9 +513,7 @@ export const tiles: readonly Tile[] = [
   { kind: "tile", id: "meter", name: "This page", hue: "#FF7C6C" },
 ];
 
-export const pebbles: readonly Pebble[] = [
-  { kind: "pebble", id: "otel-ts", name: "otel-ts", blurb: "OpenTelemetry in one call", hue: "#F2AA3C", href: `${github}/otel-ts` },
-];
+export const pebbles: readonly Pebble[] = [];
 
 export const items: readonly Item[] = [...sites, ...tiles, ...pebbles];
 
