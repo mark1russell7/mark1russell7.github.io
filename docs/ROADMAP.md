@@ -71,7 +71,7 @@ P18 removes `backdrop-filter` from the tiles. The tile plate is 86% opaque, so t
 
 These numbers compare arms inside one run. They do not give the frame rate on a real device.
 
-P19 adds the workflow `lag-budget.yml`. At 360, with a CPU four times slower, the median of 6 rounds of each route stays at or below these limits.
+P19 adds the workflow `lag-budget.yml`. At 360, with a CPU four times slower, the median of each route stays at or below these limits, with 6 to 24 rounds.
 
 | Measure | Limit | Largest A/A difference |
 | --- | ---: | ---: |
@@ -84,7 +84,8 @@ Only the outcome `within` passes. A control round in each run has a task of 800 
 The runner has no GPU, so the frame rate has no limit.
 
 Two gaps stay open in P19. The A/A differences of 1 for the frames and 500 for the nodes are choices, not measured values.
-The workflow does not stop a merge at this time, because one round above a limit gives `cannot decide`, and a slow runner can cause that.
+The workflow does not stop a merge at this time. A route with no outcome gets more rounds at looks of 12 and 24, because one slow round gives `cannot decide` at 6.
+A run fails only when an interval is above the limit. A route with no outcome at 24 rounds passes, and the record names it as undecided.
 P20 makes it a merge gate after 8 runs on main with no false failure. The weekly run and each pull request of the site count.
 
 The transparent rectangle that a visitor saw is not reproduced in a software renderer. No real GPU was tested, so it is not shown as fixed.
