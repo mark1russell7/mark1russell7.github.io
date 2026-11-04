@@ -20,7 +20,7 @@ jobs:
   measure:
     name: ${{ matrix.shard }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 85
     strategy:
       fail-fast: false
       matrix:
@@ -36,10 +36,6 @@ jobs:
       LAG_MODES: ${{ matrix.modes }}
       LAG_WIDTHS: ${{ matrix.widths }}
       LAG_OUT: ${{ github.workspace }}/lag-records
-      LAG_REPEATS: "1"
-      LAG_IDLE_MS: "4000"
-      LAG_BUDGET_MIN: "18"
-      LAG_SAMPLE_LIMIT_MS: "120000"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # The pnpm version comes from "packageManager" in package.json
@@ -60,8 +56,12 @@ jobs:
       # The built site has source maps, so a CPU profile gives a file and a line. The preview server sends the project paths to the live site.
       - name: Build the site and start the preview server
         if: matrix.target == 'built'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           pnpm install --frozen-lockfile
+          # The Pages workflow does this discovery before each build. Without it the built site has fewer cards than the live site.
+          node packages/site/scripts/discover.ts
           pnpm --filter @portfolio/site exec vite build --sourcemap
           nohup pnpm --filter @portfolio/site exec vite preview --port 4173 --strictPort > preview.log 2>&1 &
           for attempt in $(seq 1 40); do
@@ -72,7 +72,7 @@ jobs:
           echo "LAG_BASE=http://localhost:4173" >> "$GITHUB_ENV"
       - name: Measure
         # This limit is lower than the limit of the job, so the summary and the upload still run.
-        timeout-minutes: 25
+        timeout-minutes: 78
         working-directory: ${{ runner.temp }}/lag-tools
         run: node measure-lag.mjs
       - name: Summarize

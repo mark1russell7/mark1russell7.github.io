@@ -35,8 +35,8 @@ const GOTO_LIMIT_MS = 90000;
 const SAMPLE_LIMIT_MS = Number(env.LAG_SAMPLE_LIMIT_MS ?? 180000);
 const CENSUS_LIMIT_MS = 240000;
 const PROBE_LIMIT_MS = 420000;
-/** One read of one frame stops at this limit. A frame that does not answer never blocks the sample. */
-const FRAME_READ_LIMIT_MS = 5000;
+/** One read of one frame stops at this limit. A frame that does not answer never blocks the sample. A page at CPU rate 4 needs more than 5 s. */
+const FRAME_READ_LIMIT_MS = 20000;
 const CENSUS_READ_LIMIT_MS = 20000;
 /** The script stops new work after this time, so the summary and the upload always run. */
 const BUDGET_MS = Number(env.LAG_BUDGET_MIN ?? 70) * 60000;
@@ -145,11 +145,13 @@ const INIT = `(() => {
   on("layout-shift", (e) => root.cls.push({ at: e.startTime, value: e.value, input: e.hadRecentInput }));
   on("paint", (e) => root.paint.push({ name: e.name, at: e.startTime }));
   if (root.top) {
+    // This script runs before the census script. The census does not wrap this function, so it does not count this loop.
+    const raf = window.requestAnimationFrame;
     const tick = (t) => {
       root.frames.push(origin + t);
-      requestAnimationFrame(tick);
+      raf.call(window, tick);
     };
-    requestAnimationFrame(tick);
+    raf.call(window, tick);
   }
 })();`;
 
@@ -221,10 +223,14 @@ const ARM_INIT = {
 
 /** This function gives a fixed amount of work and its time, so a slow runner shows in the records. */
 function calibrate() {
-  const start = performance.now();
+  const passes = [];
   let x = 0;
-  for (let i = 0; i < 3e7; i++) x = (x * 31 + i) | 0;
-  return { ms: round(performance.now() - start), x };
+  for (let pass = 0; pass < 5; pass++) {
+    const start = performance.now();
+    for (let i = 0; i < 3e7; i++) x = (x * 31 + i) | 0;
+    passes.push(performance.now() - start);
+  }
+  return { ms: round(median(passes)), x };
 }
 
 async function open(c, { arm = "base", census = false } = {}) {
@@ -653,10 +659,11 @@ async function runCensus() {
         const { browser, page, cdp, requests } = session;
         try {
         let layers = [];
+        let layerEvents = 0;
         cdp.on("LayerTree.layerTreeDidChange", (e) => {
+          layerEvents++;
           if (e.layers) layers = e.layers;
         });
-        await cdp.send("LayerTree.enable");
         enter("goto");
         await page.goto(urlOf(route), { waitUntil: "load", timeout: GOTO_LIMIT_MS });
         enter("settle");
@@ -676,7 +683,11 @@ async function runCensus() {
           await reset();
           await sleep(5000);
           const frames = await censusFrames(page);
-          return { summary: censusSummary(frames), frames, layers: layers.length, layerMemoryMb: round(layers.reduce((a, l) => a + l.width * l.height * 4, 0) / 1048576, 1), m: await metrics(cdp) };
+          // The layer agent is on only for this read, so it does not change the counts of the window. Zero events means that the layers were not measured.
+          await cdp.send("LayerTree.enable");
+          await sleep(3000);
+          await cdp.send("LayerTree.disable");
+          return { summary: censusSummary(frames), frames, layerEvents, layers: layers.length, layersDrawing: layers.filter((l) => l.drawsContent).length, layerMemoryMb: round(layers.reduce((a, l) => a + l.width * l.height * 4, 0) / 1048576, 1), m: await metrics(cdp) };
         };
         enter("count after load");
         record.afterLoad = await window5();
