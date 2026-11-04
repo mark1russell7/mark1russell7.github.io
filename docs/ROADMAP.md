@@ -44,7 +44,7 @@ The statuses are `done`, `in progress`, `next` and `later`.
 
 P15 appeared to have two modes on a phone at 360, four times slower than a normal CPU.
 The two modes were a fault of the measure, which dropped a task that started before the first paint.
-The measure now counts each task that ends after the first paint.
+The measure counts each task that ends after the first paint.
 
 A trace of 12 rounds shows the cause. One task of 728 to 982 ms is in each round, and it is `Water.create`, which waits for the first WebGL call.
 After #99, the water starts after the first paint. CI uses a software renderer in all these numbers, so a real GPU can be faster.
@@ -55,7 +55,7 @@ After #99, the water starts after the first paint. CI uses a software renderer i
 | Longest task | 505 ms | 234 ms | 254 ms |
 | Largest paint | 876 ms | 916 ms | 896 ms |
 
-The largest paint did not change, and a block of about 200 ms stays on this phone profile.
+The largest paint did not change, and a block of approximately 200 ms stays on this phone profile.
 
 P18 removes `backdrop-filter` from the tiles. The tile plate is 86% opaque, so the blur showed little, and each frame of the water paid for it.
 
