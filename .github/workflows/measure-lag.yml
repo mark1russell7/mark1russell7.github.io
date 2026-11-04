@@ -1,0 +1,86 @@
+# This workflow measures the lag of the site in a headless Chromium. It runs on a pull request that changes this file or its script.
+# The timing work runs here and not on a shared computer, because other load makes the numbers wrong.
+# The runner has no GPU, so WebGL uses a software renderer. The arm "nowebgl" of the shard causes shows that part of the cost.
+name: Measure lag
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/measure-lag.yml
+      - packages/site/scripts/measure-lag.mjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: measure-lag-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  measure:
+    name: ${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { shard: live-grid, target: live, modes: "census,grid", widths: "360,1280" }
+          - { shard: built-grid, target: built, modes: "grid", widths: "360,1280" }
+          - { shard: causes-phone, target: live, modes: "causes", widths: "360" }
+          - { shard: causes-desktop, target: live, modes: "causes", widths: "1280" }
+          - { shard: probe-built, target: built, modes: "census,probe", widths: "360,1280" }
+    env:
+      LAG_SHARD: ${{ matrix.shard }}
+      LAG_TARGET: ${{ matrix.target }}
+      LAG_MODES: ${{ matrix.modes }}
+      LAG_WIDTHS: ${{ matrix.widths }}
+      LAG_OUT: ${{ github.workspace }}/lag-records
+      LAG_REPEATS: "1"
+      LAG_IDLE_MS: "4000"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The pnpm version comes from "packageManager" in package.json
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26
+          cache: pnpm
+      - name: Install the tools of the measurement
+        run: |
+          mkdir -p "$RUNNER_TEMP/lag-tools"
+          cp packages/site/scripts/measure-lag.mjs "$RUNNER_TEMP/lag-tools/"
+          cd "$RUNNER_TEMP/lag-tools"
+          npm init -y > /dev/null
+          npm pkg set type=module
+          npm install --no-audit --no-fund playwright@1.64.1 @mark1russell7/rigor-statistics@0.1.6 @jridgewell/trace-mapping@0.3.31
+          npx playwright install --with-deps chromium
+      # The built site has source maps, so a CPU profile gives a file and a line. The preview server sends the project paths to the live site.
+      - name: Build the site and start the preview server
+        if: matrix.target == 'built'
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @portfolio/site exec vite build --sourcemap
+          nohup pnpm --filter @portfolio/site exec vite preview --port 4173 --strictPort > preview.log 2>&1 &
+          for attempt in $(seq 1 40); do
+            curl -fsS http://localhost:4173/ > /dev/null && break
+            sleep 1
+          done
+          curl -fsS http://localhost:4173/ > /dev/null
+          echo "LAG_BASE=http://localhost:4173" >> "$GITHUB_ENV"
+      - name: Measure
+        working-directory: ${{ runner.temp }}/lag-tools
+        run: node measure-lag.mjs
+      - name: Summarize
+        if: always()
+        working-directory: ${{ runner.temp }}/lag-tools
+        env:
+          LAG_MODES: summarize
+        run: node measure-lag.mjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: lag-records-${{ matrix.shard }}
+          path: lag-records
+          if-no-files-found: warn
+          retention-days: 30
