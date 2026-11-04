@@ -1,0 +1,91 @@
+# This workflow checks the lag limits of the built site in a headless Chromium (packages/site/src/lag-limits.ts).
+# It runs in CI and not on a shared computer, because other load makes the times wrong.
+# The list of sites changes without a pull request, so a weekly run checks main as well.
+name: Lag limits
+
+on:
+  pull_request:
+  schedule:
+    - cron: "4 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lag-budget-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      pull-requests: read
+    outputs:
+      match: ${{ steps.changes.outputs.match }}
+    steps:
+      - id: changes
+        uses: mark1russell7/template/.github/actions/changes@c8d2f57af6932442af82d2f2223931e47c11beb1 # main
+        with:
+          paths: |
+            .github/workflows/lag-budget.yml
+            packages/site/**
+            pnpm-lock.yaml
+
+  measure:
+    name: lag limits
+    needs: changes
+    if: needs.changes.outputs.match == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The pnpm version comes from "packageManager" in package.json
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 26
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @portfolio/site exec playwright install --with-deps chromium
+      # The Pages workflow does this discovery before each build. Without it the built site has fewer cards than the live site.
+      - name: Build the site as the Pages workflow does
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          node packages/site/scripts/discover.ts
+          node packages/site/scripts/posters.ts
+          pnpm --filter @portfolio/site exec vite build
+      - name: Start the preview server
+        run: |
+          nohup pnpm --filter @portfolio/site exec vite preview --port 4173 --strictPort > preview.log 2>&1 &
+          for attempt in $(seq 1 40); do
+            curl -fsS http://localhost:4173/ > /dev/null && break
+            sleep 1
+          done
+          curl -fsS http://localhost:4173/ > /dev/null
+      - name: Check the limits
+        timeout-minutes: 25
+        env:
+          LAG_OUT: ${{ github.workspace }}/lag-budget
+        run: node packages/site/scripts/lag-budget.ts
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: lag-budget
+          path: lag-budget
+          if-no-files-found: warn
+          retention-days: 30
+
+  lag-ok:
+    name: Lag limits OK
+    if: always()
+    needs: [changes, measure]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - uses: mark1russell7/template/.github/actions/gate-summary@c8d2f57af6932442af82d2f2223931e47c11beb1 # main
+        with:
+          needs: ${{ toJSON(needs) }}
