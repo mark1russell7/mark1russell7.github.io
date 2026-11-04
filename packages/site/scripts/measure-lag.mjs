@@ -434,6 +434,17 @@ function loadRecord(parts, requests, loadAt, windowEnd, m) {
       lcp: round(lcp?.at ?? NaN, 0),
       lcpTag: lcp ? `${lcp.tag} ${String(lcp.url).slice(0, 60)}` : null,
       lcpLoad: round(lcp?.load ?? NaN, 0),
+      framePaints: parts
+        .filter((p) => !p.top && top)
+        .map((p) => {
+          const paint = p.paint.find((e) => e.name === "first-contentful-paint");
+          return paint ? { at: Math.round(p.origin - top.origin + paint.at), path: p.path } : null;
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.at - b.at)
+        .slice(0, 6)
+        .map((e) => `${e.at} ${e.path}`)
+        .join("; "),
       lcpRender: round(lcp?.render ?? NaN, 0),
       lcpSeries: (top?.lcp ?? []).map((e) => `${Math.round(e.at)} ${e.tag} ${e.size}`).join("; "),
       posterTimes: (top?.resources ?? []).filter((e) => e.name.includes("/posters/")).slice(0, 3).map((e) => [e.name.split("/").at(-1), e.start, e.request, e.end].map((v) => (typeof v === "number" ? Math.round(v) : v)).join(" ")).join("; "),
@@ -611,7 +622,7 @@ function gridCases() {
 function causeCases() {
   const out = [];
   for (const condition of CONDITIONS.filter((c) => c.rate === (c.width === 360 ? 4 : 1))) {
-    for (const arm of ["base", "aa", "sync"]) out.push({ route: "pond", arm, ...condition });
+    for (const arm of ["base", "aa", "before"]) out.push({ route: "pond", arm, ...condition });
   }
   return out;
 }

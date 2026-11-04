@@ -174,6 +174,83 @@ const browser = await chromium.launch();
   await context.close();
 }
 
+// The Board: a click flies to the site, and the site stays while the pointer moves.
+{
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
+  await page.goto(`${BASE}/#board`, { waitUntil: "load" });
+  await sleep(4000);
+  check("the board loads no live frame", (await frames(page)) === 0, await frames(page));
+  await page.screenshot({ path: join(OUT, "board-1280-posters.png") });
+  const box = await page.evaluate(() => {
+    const inView = [...document.querySelectorAll(".board a[data-id]")].map((card) => ({ id: card.dataset.id, rect: card.getBoundingClientRect() }));
+    const seen = inView.find(({ rect }) => rect.x > 60 && rect.y > 80 && rect.right < innerWidth - 60 && rect.bottom < innerHeight - 60);
+    return seen ? { id: seen.id, x: seen.rect.x + seen.rect.width / 2, y: seen.rect.y + seen.rect.height / 2 } : null;
+  });
+  check("the board shows a whole card", box !== null, box?.id);
+  await page.mouse.click(box.x, box.y);
+  await page.getByText("You can use the site here.").waitFor({ timeout: 20000 }).catch(() => {});
+  await sleep(2500);
+  const focused = page.locator(".board-card.is-focused iframe");
+  check("a click on the board gives its site one frame", (await frames(page)) === 1 && (await focused.count()) === 1, await frames(page));
+  await page.screenshot({ path: join(OUT, "board-1280-focused.png") });
+  const other = await page.evaluate((id) => {
+    const seen = [...document.querySelectorAll(".board a[data-id]")].filter((card) => card.dataset.id !== id).map((card) => card.getBoundingClientRect());
+    const rect = seen.find((one) => one.x + one.width / 2 > 10 && one.x + one.width / 2 < innerWidth - 10 && one.y + one.height / 2 > 70 && one.y + one.height / 2 < innerHeight - 10);
+    return rect ? { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 } : null;
+  }, box.id);
+  if (other) {
+    await page.mouse.move(other.x, other.y);
+    await sleep(900);
+    check("a pointer on a neighbour keeps the open site", (await focused.count()) === 1 && (await frames(page)) === 1, await frames(page));
+  } else {
+    console.log("skip a pointer on a neighbour: no other card is in the view");
+  }
+  await page.mouse.move(640, 12);
+  await sleep(900);
+  check("a pointer that leaves keeps the open site", (await focused.count()) === 1, await focused.count());
+  const child = await focused.elementHandle().then((element) => element.contentFrame());
+  await child.waitForLoadState("load");
+  await sleep(500);
+  await child.evaluate(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })));
+  await sleep(1500);
+  check("Esc in the loaded site leaves it and unloads the frame", (await page.locator(".board-card.is-focused").count()) === 0 && (await frames(page)) === 0, await frames(page));
+  await context.close();
+}
+
+// The Board and the River on a phone, and the River on a desktop
+for (const route of ["board", "river"]) {
+  const context = await browser.newContext({ viewport: { width: 360, height: 780 }, hasTouch: true, isMobile: true });
+  const page = await context.newPage();
+  await page.goto(`${BASE}/#${route}`, { waitUntil: "load" });
+  await sleep(4000);
+  check(`the ${route} on a phone loads no live frame`, (await frames(page)) === 0, await frames(page));
+  await page.screenshot({ path: join(OUT, `${route}-360-posters.png`) });
+  await context.close();
+}
+{
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
+  await page.goto(`${BASE}/#river`, { waitUntil: "load" });
+  await sleep(4000);
+  check("the river loads no live frame", (await frames(page)) === 0, await frames(page));
+  const point = await page.evaluate(() => {
+    const rects = [...document.querySelectorAll(".river a[data-id]")].map((card) => card.getBoundingClientRect());
+    const rect = rects.find((one) => one.x > 200 && one.right < innerWidth - 200 && one.y > 70 && one.bottom < innerHeight - 10);
+    return rect ? { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 } : null;
+  });
+  check("the river shows a whole card", point !== null, point);
+  await page.mouse.move(point.x, point.y);
+  await page.mouse.move(point.x + 1, point.y + 1);
+  await sleep(900);
+  check("a mouse that rests on a river card starts one frame", (await frames(page)) === 1, await frames(page));
+  await page.screenshot({ path: join(OUT, "river-1280-hover.png") });
+  await page.mouse.move(640, 12);
+  await sleep(700);
+  check("leaving a river card unloads its frame", (await frames(page)) === 0, await frames(page));
+  await context.close();
+}
+
 // The build of main: its frames, with no hover. This tells a fault of the pilot from a fault of the capture.
 if (process.env.LAG_BEFORE_BASE) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
