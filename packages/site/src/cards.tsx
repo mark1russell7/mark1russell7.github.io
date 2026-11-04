@@ -66,7 +66,7 @@ export function useSiteExists(site: Site): boolean | null {
 }
 
 /**
- * A frame with an opacity of 1 left a transparent rectangle in the water under the pool, in screenshots and in screencast frames of a software renderer.
+ * A frame at an opacity of 1 left a transparent rectangle in the water, in the pictures of a software renderer.
  * This value keeps the frame out of the opaque layers of the compositor, and the rectangle goes. A person cannot see the difference.
  */
 const LOADED_OPACITY = 0.999;
