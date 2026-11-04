@@ -86,7 +86,7 @@ for (const path of ["/lag-hud/", "/docker-sqlite/", "/cue/", "/layout-contract/"
 }
 
 // The sites that took the shared shell: the build line, the width and the errors
-for (const path of ["/ts-base/", "/grafana-infra/", "/otel-ts/", "/Funk/", "/highways/", "/layout-contract/", "/optional/"]) {
+for (const path of ["/ts-base/", "/grafana-infra/", "/otel-ts/", "/Funk/", "/highways/", "/layout-contract/", "/Meds/", "/Logger/", "/TinyImages/"]) {
   for (const width of [360, 1280]) {
     const { page, errors, close } = await open(path, width);
     const { pageWide, view, build } = await shape(page);
