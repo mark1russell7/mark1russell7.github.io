@@ -41,8 +41,8 @@ export interface LagRound extends LagValues {
 export type LagMeasure = "tbtAll" | "longestAll" | "frames" | "nodes";
 
 /**
- * The limit and the largest A/A difference of each measure, as the median of the rounds on a phone profile of 360 px
- * and four times slower CPU. The runner has no GPU, so a frame rate has no limit here.
+ * The limit and the largest A/A difference of each measure. Each value is the median of the rounds on a phone profile:
+ * 360 px, with a CPU four times slower. The runner has no GPU, so a frame rate has no limit here.
  */
 export const LIMITS: Readonly<Record<LagMeasure, { readonly limit: number; readonly maxDifference: number }>> = {
   tbtAll: { limit: 450, maxDifference: 200 },
