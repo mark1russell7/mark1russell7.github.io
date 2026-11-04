@@ -41,7 +41,8 @@ The statuses are `done`, `in progress`, `next` and `later`.
 | P16 | The Board and the River show posters in the same way | done (2026-11-04) | P15 | #96 |
 | P17 | Find the cause of the slow Pond rounds on a phone, and of the late poster paint, with a CPU trace in CI | done (2026-11-04) | P15 | #99 |
 | P18 | Remove the blur behind the tiles | done (2026-11-04) | P17 | #100 |
-| P19 | A limit on the lag of the site in CI | in progress | P18 | |
+| P19 | A limit on the lag of the site in CI | done (2026-11-04) | P18 | #101 |
+| P20 | Make `Lag limits OK` a required check | later | P19 | |
 
 P15 appeared to have two modes on a phone at 360, four times slower than a normal CPU.
 The two modes were a fault of the measure, which dropped a task that started before the first paint.
@@ -81,5 +82,9 @@ P19 adds the workflow `lag-budget.yml`. At 360, with a CPU four times slower, th
 
 Only the outcome `within` passes. A control round in each run has a task of 800 ms, so the run proves that the measure can see a long task.
 The runner has no GPU, so the frame rate has no limit.
+
+Two gaps stay open in P19. The A/A differences of 1 for the frames and 500 for the nodes are choices, not measured values.
+The workflow is not a required check yet, because one round above a limit gives `cannot decide`, and a slow runner can cause that.
+P20 makes it required after 8 runs on main with no false failure. The weekly run and each pull request of the site count.
 
 The transparent rectangle that a visitor saw is not reproduced in a software renderer. No real GPU was tested, so it is not shown as fixed.
