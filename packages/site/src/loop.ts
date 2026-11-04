@@ -63,6 +63,35 @@ export function useLoop(step: (dt: number, now: number) => void): void {
   }, []);
 }
 
+/** The longest wait for an idle moment, in milliseconds. */
+const IDLE_TIMEOUT_MS = 1000;
+
+/**
+ * This function starts `run` after the load event, the next paint and an idle moment of the main thread.
+ * Work that can wait uses it, so the first posters paint before that work. It gives a function that cancels the start.
+ */
+export function afterPaint(run: () => void): () => void {
+  let live = true;
+  const whenLive =
+    (next: () => void): (() => void) =>
+    () => {
+      if (live) next();
+    };
+  const start = whenLive(run);
+  const idle = whenLive(() => {
+    if (typeof requestIdleCallback === "function") requestIdleCallback(start, { timeout: IDLE_TIMEOUT_MS });
+    else setTimeout(start, 0);
+  });
+  // The first frame paints, and the second frame comes after that paint.
+  const frames = whenLive(() => requestAnimationFrame(whenLive(() => requestAnimationFrame(idle))));
+  if (document.readyState === "complete") frames();
+  else addEventListener("load", frames, { once: true });
+  return () => {
+    live = false;
+    removeEventListener("load", frames);
+  };
+}
+
 /** This hook gives true when the user asks for reduced motion. */
 export function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);

@@ -1,7 +1,7 @@
 import { type CSSProperties, type ReactElement, useEffect, useRef, useState } from "react";
 import { bio, FRAME_HEIGHT, FRAME_WIDTH, type Item, links, type Pebble, proof, type Site, type Tile } from "./content.ts";
 import { useHeldFrame, useLive, useLiveCard } from "./live.ts";
-import { meter } from "./loop.ts";
+import { afterPaint, meter } from "./loop.ts";
 import posterIds from "./posters.json" with { type: "json" };
 
 /** The height of the caption under the frame of a site, in pixels. */
@@ -48,10 +48,13 @@ export function useSiteExists(site: Site): boolean | null {
   useEffect(() => {
     let status = siteStatus.get(site.path);
     if (!status) {
-      status = fetch(site.path, { method: "HEAD" }).then(
-        (response) => response.ok,
-        () => true,
-      );
+      // The question waits for the first paint. A card links to its site until the answer comes.
+      status = new Promise<void>((resolve) => afterPaint(resolve))
+        .then(() => fetch(site.path, { method: "HEAD" }))
+        .then(
+          (response) => response.ok,
+          () => true,
+        );
       siteStatus.set(site.path, status);
     }
     let live = true;
