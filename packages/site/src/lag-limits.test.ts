@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONTROL_MS, type LagRound, type LagValues, LIMITS, blockingOf, controlHolds, judgeLag, lagPasses } from "./lag-limits.ts";
+import { CONTROL_MS, type LagRound, type LagValues, LAST_ROUNDS, LIMITS, blockingOf, controlHolds, judgeLag, lagMore, lagPasses, lagUndecided } from "./lag-limits.ts";
 
 const HEALTHY: LagValues = { tbtAll: 220, longestAll: 240, frames: 1, nodes: 570, lcp: 900 };
 
@@ -52,10 +52,18 @@ describe("judgeLag", () => {
     }
   });
 
-  it("does not pass a run with noise between the two arms", () => {
-    const rounds = roundsOf("pond", { tbtAll: 100 }, { tbtAll: 400 });
+  it("asks for more rounds of a route with noise between the two arms", () => {
+    const rounds = [...roundsOf("board"), ...roundsOf("pond", { tbtAll: 100 }, { tbtAll: 400 })];
     expect(outcome(rounds, "tbtAll")).toBe("cannot decide");
+    expect(lagMore(judgeLag(rounds))).toEqual(new Map([["pond", 12]]));
     expect(lagPasses(judgeLag(rounds))).toBe(false);
+  });
+
+  it("passes a case with no outcome at the budget, and it names the case", () => {
+    const rounds = roundsOf("pond", { tbtAll: 100 }, { tbtAll: 400 }, LAST_ROUNDS);
+    expect(lagMore(judgeLag(rounds)).size).toBe(0);
+    expect(lagPasses(judgeLag(rounds))).toBe(true);
+    expect(lagUndecided(judgeLag(rounds))).toMatchObject([{ measure: "tbtAll", route: "pond" }]);
   });
 
   it("does not pass a run with too few rounds, or with no rounds", () => {
