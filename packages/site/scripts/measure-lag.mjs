@@ -154,6 +154,27 @@ const INIT = `(() => {
   on("layout-shift", (e) => root.cls.push({ at: e.startTime, value: e.value, input: e.hadRecentInput }));
   on("paint", (e) => root.paint.push({ name: e.name, at: e.startTime }));
   if (root.top) {
+    const seen = (root.cardFirst = {});
+    const started = performance.now();
+    const look = () => {
+      for (const frame of document.querySelectorAll(".frame")) {
+        const rect = frame.getBoundingClientRect();
+        if (rect.width === 0 || rect.bottom <= 0 || rect.top >= innerHeight) continue;
+        const opacity = Number(getComputedStyle(frame.closest(".card") ?? frame).opacity);
+        if (opacity <= 0.2) continue;
+        const now = Math.round(performance.now());
+        seen.cardShown ??= now;
+        const image = frame.querySelector("img");
+        if (image?.complete && image.naturalWidth > 0) seen.poster ??= now;
+        const live = frame.querySelector("iframe");
+        if (live && Number(getComputedStyle(live).opacity) > 0.5) seen.frame ??= now;
+        if (getComputedStyle(frame.querySelector(".frame-poster") ?? frame).backgroundImage !== "none") seen.social ??= now;
+      }
+      if (performance.now() - started < 8000) requestAnimationFrame(look);
+    };
+    requestAnimationFrame(look);
+  }
+  if (root.top) {
     // This script runs before the census script. The census does not wrap this function, so it does not count this loop.
     const raf = window.requestAnimationFrame;
     const tick = (t) => {
@@ -434,16 +455,18 @@ function loadRecord(parts, requests, loadAt, windowEnd, m) {
       lcp: round(lcp?.at ?? NaN, 0),
       lcpTag: lcp ? `${lcp.tag} ${String(lcp.url).slice(0, 60)}` : null,
       lcpLoad: round(lcp?.load ?? NaN, 0),
+      cardFirst: JSON.stringify(top?.cardFirst ?? null),
+      ogEnd: round(Math.min(Infinity, ...(top?.resources ?? []).filter((e) => e.name.includes("/og/")).map((e) => e.end)), 0),
       framePaints: parts
         .filter((p) => !p.top && top)
         .map((p) => {
           const paint = p.paint.find((e) => e.name === "first-contentful-paint");
-          return paint ? { at: Math.round(p.origin - top.origin + paint.at), path: p.path } : null;
+          return paint ? { at: Math.round(p.origin - top.origin + paint.at), load: Math.round(p.origin - top.origin + (p.nav?.loadEventEnd ?? NaN)), path: p.path } : null;
         })
         .filter(Boolean)
         .sort((a, b) => a.at - b.at)
         .slice(0, 6)
-        .map((e) => `${e.at} ${e.path}`)
+        .map((e) => `${e.at} load ${e.load} ${e.path}`)
         .join("; "),
       lcpRender: round(lcp?.render ?? NaN, 0),
       lcpSeries: (top?.lcp ?? []).map((e) => `${Math.round(e.at)} ${e.tag} ${e.size}`).join("; "),
