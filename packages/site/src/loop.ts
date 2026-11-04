@@ -1,13 +1,16 @@
 import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from "react";
 
+/** A longer gap between two frames is a hidden tab, not a slow frame. */
+const HIDDEN_GAP_MS = 5000;
+
 /** The frame meter records the work time of each animation frame of the pool. */
 export class FrameMeter {
   /** The work time of the last frames, in milliseconds. */
   readonly samples: Float32Array = new Float32Array(90);
   private index = 0;
   private lastFrame = 0;
-  /** The frames in each second, smoothed. */
-  fps = 60;
+  /** The time between frames, smoothed, in milliseconds. */
+  private intervalMs = 1000 / 60;
 
   /** This method records one frame. */
   record(workMs: number, now: number): void {
@@ -15,9 +18,14 @@ export class FrameMeter {
     this.index = (this.index + 1) % this.samples.length;
     if (this.lastFrame > 0) {
       const interval = now - this.lastFrame;
-      if (interval > 0 && interval < 250) this.fps += (1000 / interval - this.fps) * 0.05;
+      if (interval > 0 && interval < HIDDEN_GAP_MS) this.intervalMs += (interval - this.intervalMs) * 0.05;
     }
     this.lastFrame = now;
+  }
+
+  /** This getter gives the frames in each second. It smooths the time, so a slow frame counts for all of its time. */
+  get fps(): number {
+    return 1000 / this.intervalMs;
   }
 
   /** This method gives the samples from the oldest to the newest. */
