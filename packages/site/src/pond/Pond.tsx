@@ -3,7 +3,7 @@ import { PlateCard } from "../cards.tsx";
 import type { ConceptProps } from "../concept.ts";
 import { hueRgb, items } from "../content.ts";
 import { PHONE_WIDTH, random } from "../layout.ts";
-import { ease, useLoop, useSize } from "../loop.ts";
+import { afterPaint, ease, useLoop, useSize } from "../loop.ts";
 import { Fluid } from "./fluid.ts";
 import { type Placed, pondDesktop, pondPhone } from "./homes.ts";
 import { Water } from "./water.ts";
@@ -44,13 +44,12 @@ export function Pond({ onOpen, reduced, paused }: ConceptProps): ReactElement {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!plan || !canvas) return;
+    if (!plan || !canvas) return undefined;
     // The water is soft, so a canvas at a lower resolution looks the same and costs less.
     const ratio = 0.6;
     canvas.width = Math.round(width * ratio);
     canvas.height = Math.round(height * ratio);
     const fluid = new Fluid(width, height, Math.max(8, width / 150));
-    const water = Water.create(canvas, fluid);
     const bodies: Body[] = plan.boxes.map((box, index) => {
       const spread = plan.phone ? 40 : 120;
       const start = reduced ? { x: box.x, y: box.y } : { x: box.x + (random(index) - 0.5) * spread, y: box.y + 120 + random(index + 50) * 80 };
@@ -74,7 +73,13 @@ export function Pond({ onOpen, reduced, paused }: ConceptProps): ReactElement {
       }
     }
     scroll.current = { top: scrollRef.current?.scrollTop ?? 0, speed: 0 };
-    state.current = { fluid, water, bodies, start: performance.now(), nextAmbient: 6 };
+    const sim = { fluid, water: null as Water | null, bodies, start: performance.now(), nextAmbient: 6 };
+    state.current = sim;
+    // The first WebGL call can hold the main thread for 500 ms on a slow phone, so the water starts after the first posters paint.
+    return afterPaint(() => {
+      sim.water = Water.create(canvas, fluid);
+      sim.water?.draw(0);
+    });
   }, [plan, width, height, reduced]);
 
   useLoop((dt, now) => {
@@ -227,7 +232,7 @@ export function Pond({ onOpen, reduced, paused }: ConceptProps): ReactElement {
       }
       fluid.step(dt, { vorticity: 9, velocityDecay: 0.3, dyeDecay: 0.12, iterations: 12, smooth: 0.18 });
     }
-    if (!reduced || t < 0.1) sim.water?.draw(t);
+    if (!reduced) sim.water?.draw(t);
 
     for (const b of bodies) {
       const element = elements.current.get(b.item.id);
