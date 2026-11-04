@@ -1,6 +1,6 @@
 import { type CSSProperties, type ReactElement, useEffect, useRef, useState } from "react";
 import { bio, FRAME_HEIGHT, FRAME_WIDTH, type Item, links, type Pebble, proof, type Site, type Tile } from "./content.ts";
-import { useLive, useLiveCard } from "./live.ts";
+import { useHeldFrame, useLive, useLiveCard } from "./live.ts";
 import { meter } from "./loop.ts";
 import posterIds from "./posters.json" with { type: "json" };
 
@@ -107,11 +107,11 @@ function LiveFrame(props: { site: Site; width: number; height: number; interacti
 }
 
 /**
- * This component shows the poster of a site, and the site over it. With `onDemand`, the site loads only when the card is live.
+ * This component shows the poster of a site, and the site over it. The site loads only when the card is live.
  * Each poster comes from the Pages workflow. A site with no poster keeps its social image or its name.
  */
-export function SiteFrame(props: { site: Site; width: number; height: number; interactive?: boolean; onDemand?: boolean }): ReactElement {
-  const { site, width, height, interactive = false, onDemand = false } = props;
+export function SiteFrame(props: { site: Site; width: number; height: number; interactive?: boolean }): ReactElement {
+  const { site, width, height, interactive = false } = props;
   const exists = useSiteExists(site);
   const live = useLive(site.id);
   const shot = posters.has(site.id);
@@ -134,7 +134,7 @@ export function SiteFrame(props: { site: Site; width: number; height: number; in
         )}
         {exists === false ? <em>The site is on its way</em> : null}
       </div>
-      {exists && (live || !onDemand) ? <LiveFrame site={site} width={width} height={height} interactive={interactive} /> : null}
+      {exists && live ? <LiveFrame site={site} width={width} height={height} interactive={interactive} /> : null}
     </div>
   );
 }
@@ -339,8 +339,6 @@ export function PlateCard(props: {
   width: number;
   height: number;
   interactive?: boolean;
-  /** True when the card shows a poster until the user asks for the site. */
-  onDemand?: boolean;
   onOpen?: (id: string, element: HTMLElement) => void;
   cardRef?: (element: HTMLElement | null) => void;
   className?: string;
@@ -368,9 +366,10 @@ export function PlateCard(props: {
 
 /** This component shows a site as a flat card. When the site is not on the server yet, the card links to the repository. */
 function SiteCard(props: Parameters<typeof PlateCard>[0] & { site: Site; className: string; style: CSSProperties }): ReactElement {
-  const { site, width, height, onOpen, cardRef, interactive = false, onDemand = false, scale = 1, className, style } = props;
+  const { site, width, height, onOpen, cardRef, interactive = false, scale = 1, className, style } = props;
   const exists = useSiteExists(site);
   const live = useLiveCard(site.id);
+  useHeldFrame(interactive ? site.id : null);
   const missing = exists === false;
   return (
     <a
@@ -381,16 +380,14 @@ function SiteCard(props: Parameters<typeof PlateCard>[0] & { site: Site; classNa
       data-id={site.id}
       draggable={false}
       aria-label={`${site.name}: ${site.blurb}`}
-      {...(onDemand ? live.handlers : undefined)}
+      {...live}
       onClick={(event) => {
         if (missing || !onOpen || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
         event.preventDefault();
-        // The panel loads the site, so the card lets its frame go.
-        live.stop();
         onOpen(site.id, event.currentTarget);
       }}
     >
-      <SiteFrame site={site} width={width} height={height - CAPTION_HEIGHT * scale} interactive={interactive} onDemand={onDemand} />
+      <SiteFrame site={site} width={width} height={height - CAPTION_HEIGHT * scale} interactive={interactive} />
       <SiteCaption site={site} scale={scale} />
     </a>
   );

@@ -56,6 +56,8 @@ export function Board({ onOpen, reduced, paused }: ConceptProps): ReactElement {
   const before = useRef<Camera | null>(null);
   const [focused, setFocused] = useState<string | null>(null);
   const [arrived, setArrived] = useState(false);
+  // A load gives the frame a new window, so the key listener of the effect below must run again.
+  const [, setFrameLoads] = useState(0);
   const shown = useRef<World | null>(null);
 
   /** This function gives the camera for the whole board. On a phone, the camera shows the full width at the top of the column. */
@@ -265,6 +267,9 @@ export function Board({ onOpen, reduced, paused }: ConceptProps): ReactElement {
       onPointerMove={move}
       onPointerUp={up}
       onPointerCancel={up}
+      onLoadCapture={(event) => {
+        if (event.target instanceof HTMLIFrameElement) setFrameLoads((count) => count + 1);
+      }}
     >
       <div className="board-world" ref={worldRef}>
         {items.map((item) => {

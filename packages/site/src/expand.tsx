@@ -1,5 +1,6 @@
 import { type CSSProperties, type ReactElement, useEffect, useLayoutEffect, useRef } from "react";
 import type { Site } from "./content.ts";
+import { useHeldFrame } from "./live.ts";
 
 /** The place on the screen that the panel opens from and closes to. */
 export interface Origin {
@@ -38,6 +39,7 @@ const timing: KeyframeAnimationOptions = { duration: 520, easing: "cubic-bezier(
  */
 export function Expanded(props: { site: Site; origin: () => Origin | null; onClosed: () => void; reduced: boolean }): ReactElement {
   const { site, origin, onClosed, reduced } = props;
+  useHeldFrame(`panel:${site.id}`);
   const panelRef = useRef<HTMLDivElement>(null);
   const backdropRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
