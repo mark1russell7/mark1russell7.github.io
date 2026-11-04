@@ -12,6 +12,7 @@ const LIVE_DELAY_MS = 300;
 /** This class records the cards that show a live site. The newest card stays, and the oldest card goes back to its poster. */
 export class LiveFrames {
   private ids: readonly string[] = [];
+  private held: string | null = null;
   private readonly listeners = new Set<() => void>();
   private readonly limit: number;
 
@@ -31,16 +32,30 @@ export class LiveFrames {
     return this.limit === Number.POSITIVE_INFINITY || this.ids.includes(id);
   }
 
-  /** This method gives the card a live frame. The frames over the limit go. */
+  /** This method gives the card a live frame. The frames over the limit go. A held frame stays, and the card gets nothing. */
   claim(id: string): void {
-    if (this.ids.includes(id)) return;
+    if (this.ids.includes(id) || this.held !== null) return;
     const ids = [...this.ids, id];
     this.set(ids.slice(Math.max(0, ids.length - this.limit)));
   }
 
-  /** This method unloads the frame of the card. */
+  /** This method unloads the frame of the card. A held frame stays. */
   release(id: string): void {
-    if (this.ids.includes(id)) this.set(this.ids.filter((other) => other !== id));
+    if (id !== this.held && this.ids.includes(id)) this.set(this.ids.filter((other) => other !== id));
+  }
+
+  /** This method keeps a frame for a site that the user works in. A pointer on another card cannot take the frame. */
+  hold(id: string): void {
+    this.held = null;
+    this.claim(id);
+    this.held = id;
+  }
+
+  /** This method ends a hold and unloads the frame. */
+  letGo(id: string): void {
+    if (this.held !== id) return;
+    this.held = null;
+    this.release(id);
   }
 
   private set(ids: readonly string[]): void {
@@ -56,15 +71,23 @@ export function useLive(id: string): boolean {
   return useSyncExternalStore(liveFrames.subscribe, () => liveFrames.isLive(id));
 }
 
-/** The handlers that a card puts on its element, and the function that sends the card back to its poster. */
+/** This hook keeps a frame while `id` is a string. The open site holds it, so the limit counts the panel too. */
+export function useHeldFrame(id: string | null): void {
+  useEffect(() => {
+    if (id === null) return undefined;
+    liveFrames.hold(id);
+    return () => {
+      liveFrames.letGo(id);
+    };
+  }, [id]);
+}
+
+/** The handlers that a card puts on its element. */
 export interface LiveCard {
-  readonly handlers: {
-    readonly onPointerEnter: (event: PointerEvent) => void;
-    readonly onPointerLeave: () => void;
-    readonly onFocus: (event: FocusEvent<HTMLElement>) => void;
-    readonly onBlur: () => void;
-  };
-  readonly stop: () => void;
+  readonly onPointerEnter: (event: PointerEvent) => void;
+  readonly onPointerLeave: () => void;
+  readonly onFocus: (event: FocusEvent<HTMLElement>) => void;
+  readonly onBlur: () => void;
 }
 
 /**
@@ -86,16 +109,13 @@ export function useLiveCard(id: string): LiveCard {
   // A card that leaves the page keeps no frame and no timer.
   useEffect(() => stop, [id]);
   return {
-    handlers: {
-      onPointerEnter: (event) => {
-        if (event.pointerType === "mouse") start();
-      },
-      onPointerLeave: stop,
-      onFocus: (event) => {
-        if (event.currentTarget.matches(":focus-visible")) start();
-      },
-      onBlur: stop,
+    onPointerEnter: (event) => {
+      if (event.pointerType === "mouse") start();
     },
-    stop,
+    onPointerLeave: stop,
+    onFocus: (event) => {
+      if (event.currentTarget.matches(":focus-visible")) start();
+    },
+    onBlur: stop,
   };
 }
