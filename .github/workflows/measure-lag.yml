@@ -28,6 +28,7 @@ jobs:
       matrix:
         include:
           - { shard: pair-phone, target: built, modes: "causes", widths: "360" }
+          - { shard: pair-desktop, target: built, modes: "causes", widths: "1280" }
           - { shard: census-built, target: built, modes: "census", widths: "360,1280" }
     env:
       LAG_SHARD: ${{ matrix.shard }}

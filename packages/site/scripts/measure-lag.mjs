@@ -146,7 +146,11 @@ const INIT = `(() => {
       scripts: (e.scripts || []).map((s) => ({ dur: s.duration, forced: s.forcedStyleAndLayoutDuration, invoker: s.invoker, type: s.invokerType, url: s.sourceURL, fn: s.sourceFunctionName, pos: s.sourceCharPosition, window: s.windowAttribution })),
     });
   });
-  on("largest-contentful-paint", (e) => root.lcp.push({ at: e.startTime, size: e.size, url: e.url, tag: e.element && e.element.tagName }));
+  on("largest-contentful-paint", (e) => root.lcp.push({ at: e.startTime, load: e.loadTime, render: e.renderTime, size: e.size, url: e.url, tag: e.element && e.element.tagName }));
+  on("resource", (e) => {
+    if (!root.top) return;
+    (root.resources ??= []).push({ name: e.name, type: e.initiatorType, start: e.startTime, request: e.requestStart, response: e.responseStart, end: e.responseEnd });
+  });
   on("layout-shift", (e) => root.cls.push({ at: e.startTime, value: e.value, input: e.hadRecentInput }));
   on("paint", (e) => root.paint.push({ name: e.name, at: e.startTime }));
   if (root.top) {
@@ -263,6 +267,17 @@ async function open(c, { arm = "base", census = false } = {}) {
   await page.addInitScript({ content: INIT });
   if (census) await page.addInitScript({ content: CENSUS_INIT });
   if (ARM_INIT[arm]) await page.addInitScript({ content: ARM_INIT[arm] });
+  if (arm === "nohead") {
+    // GitHub Pages speaks HTTP/2, so its HEAD requests hold no connection. This arm takes that queue away from the preview server.
+    await page.route("**/*", (route) => (route.request().method() === "HEAD" ? route.fulfill({ status: 200 }) : route.continue()));
+  }
+  if (arm === "nopreload") {
+    await page.route((url) => url.pathname === "/", async (route) => {
+      const response = await route.fetch();
+      const body = (await response.text()).replace(/<link rel="preload" as="image"[^>]*>/g, "");
+      await route.fulfill({ response, body });
+    });
+  }
   if (arm === "noiframes") {
     await page.route("**/*", (route) => {
       const request = route.request();
@@ -408,6 +423,12 @@ function loadRecord(parts, requests, loadAt, windowEnd, m) {
       fcp: round(fcp ?? NaN, 0),
       lcp: round(lcp?.at ?? NaN, 0),
       lcpTag: lcp ? `${lcp.tag} ${String(lcp.url).slice(0, 60)}` : null,
+      lcpLoad: round(lcp?.load ?? NaN, 0),
+      lcpRender: round(lcp?.render ?? NaN, 0),
+      lcpSeries: (top?.lcp ?? []).map((e) => `${Math.round(e.at)} ${e.tag} ${e.size}`).join("; "),
+      posterTimes: (top?.resources ?? []).filter((e) => e.name.includes("/posters/")).slice(0, 3).map((e) => [e.name.split("/").at(-1), e.start, e.request, e.end].map((v) => (typeof v === "number" ? Math.round(v) : v)).join(" ")).join("; "),
+      headLast: round(Math.max(0, ...(top?.resources ?? []).filter((e) => e.type === "fetch").map((e) => e.end)), 0),
+      scriptEnd: round(Math.max(0, ...(top?.resources ?? []).filter((e) => e.type === "script").map((e) => e.end)), 0),
       loadEvent: round(top?.nav?.loadEventEnd ?? NaN, 0),
       cls: round(shifts.reduce((a, s) => a + s.value, 0), 4),
       tbt: round(inWindow.reduce((a, e) => a + Math.max(0, e.dur - 50), 0), 0),
@@ -580,7 +601,7 @@ function gridCases() {
 function causeCases() {
   const out = [];
   for (const condition of CONDITIONS.filter((c) => c.rate === (c.width === 360 ? 4 : 1))) {
-    for (const arm of ["base", "aa", "eager", "reduced"]) out.push({ route: "pond", arm, ...condition });
+    for (const arm of ["base", "aa", "before", "nopreload", "nohead"]) out.push({ route: "pond", arm, ...condition });
   }
   return out;
 }
