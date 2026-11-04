@@ -39,10 +39,34 @@ The statuses are `done`, `in progress`, `next` and `later`.
 | --- | --- | --- | --- | --- |
 | P15 | The Pond shows a poster for each card, and a site starts only on request | done (2026-11-04) | P2 | #94 |
 | P16 | The Board and the River show posters in the same way | done (2026-11-04) | P15 | #96 |
-| P17 | Find the cause of the slow Pond rounds on a phone, and of the late poster paint, with a CPU trace in CI | in progress | P15 | |
+| P17 | Find the cause of the slow Pond rounds on a phone, and of the late poster paint, with a CPU trace in CI | done (2026-11-04) | P15 | #99 |
+| P18 | Remove the blur behind the tiles | in progress | P17 | |
 
-The result of P15 has two modes on a phone at 360, four times slower than a normal CPU.
-The total blocking time was 9 ms in one run. In the next run its median was 86 ms, and 2 of 5 rounds were above 700 ms.
-P17 looks for the cause of those rounds. The trace of 12 rounds shows one task of 728 to 982 ms in each round. It starts just after the first paint, and the poster paints just after it ends. The task is `Water.create`, which waits for the first WebGL call. CI uses a software renderer, so a real GPU can have a different time. The earlier build of the Pond had a median of 2185 ms in the first run.
+P15 appeared to have two modes on a phone at 360, four times slower than a normal CPU.
+The two modes were a fault of the measure, which dropped a task that started before the first paint.
+The measure counts each task that ends after the first paint.
+
+A trace of 12 rounds shows the cause. One task of 728 to 982 ms is in each round, and it is `Water.create`, which waits for the first WebGL call.
+After #99, the water starts after the first paint. CI uses a software renderer in all these numbers, so a real GPU can be faster.
+
+| Pond, 360, four times slower, median of 5 | Before #99 | After #99 | A/A |
+| --- | --- | --- | --- |
+| Total blocking time | 547 ms | 217 ms | 227 ms |
+| Longest task | 505 ms | 234 ms | 254 ms |
+| Largest paint | 876 ms | 916 ms | 896 ms |
+
+The largest paint did not change, and a block of approximately 200 ms stays on this phone profile.
+
+P18 removes `backdrop-filter` from the tiles. The tile plate is 86% opaque, so the blur showed little, and each frame of the water paid for it.
+
+| Idle frames per second, median of 5 | With the blur | Without | A/A |
+| --- | --- | --- | --- |
+| Pond, 360, four times slower | 23.7 | 45.3 | 45.7 |
+| River, 360, four times slower | 21.4 | 25.4 | 25.5 |
+| Pond, 1280 | 11.5 | 16.2 | 16.2 |
+| River, 1280 | 12.4 | 17.2 | 17.1 |
+| Board, 1280 | 41.2 | 60 | 60 |
+
+These numbers compare arms inside one run. They do not give the frame rate on a real device.
 
 The transparent rectangle that a visitor saw is not reproduced in a software renderer. No real GPU was tested, so it is not shown as fixed.
