@@ -7,6 +7,8 @@ name: Pages
 on:
   push:
     branches: [main]
+  # A pull request builds the site and checks it, with no deploy.
+  pull_request:
   workflow_dispatch:
   # A repository can ask for a new discovery when its site changes (event type pages-site).
   repository_dispatch:
@@ -58,7 +60,7 @@ jobs:
     if: ${{ !cancelled() && (github.event_name != 'schedule' || needs.check.outputs.changed == 'true') }}
     # One deployment at a time, on this job only: an hourly run with no change does not cancel a deployment.
     concurrency:
-      group: pages
+      group: pages-${{ github.event_name == 'pull_request' && github.ref || 'deploy' }}
       cancel-in-progress: false
     uses: mark1russell7/template/.github/workflows/reusable-pages.yml@f48f29fe5b00772951e0910a90fbbe312343338c # main
     # The build job of the shared workflow gets only the read permissions. Only its deploy job,
@@ -87,3 +89,7 @@ jobs:
       site-name: mark1russell7.github.io
       # The Status page shows this roadmap. The rule roadmap-parses reads it on each PR.
       roadmap: docs/ROADMAP.md
+      deploy: ${{ github.event_name != 'pull_request' }}
+      site-check: true
+      site-check-pages: /,/releases/,/status/
+      site-check-probe: packages/site/src/check-probe.ts
