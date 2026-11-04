@@ -115,12 +115,11 @@ function seo(): Plugin {
 function preloadPosters(): Plugin {
   const posters: ReadonlySet<string> = new Set(posterIds);
   const first = sites.filter((site) => posters.has(site.id)).slice(0, 2);
-  const tags = first.map((site) => `  <link rel="preload" as="image" href="/posters/${site.id}.webp" type="image/webp" fetchpriority="high" />
-`);
+  const tags = first.map((site) => `  <link rel="preload" as="image" href="/posters/${site.id}.webp" type="image/webp" fetchpriority="high" />`);
   return {
     name: "portfolio-preload-posters",
     transformIndexHtml(html) {
-      return html.replace("</head>", `${tags.join("")}  </head>`);
+      return html.replace("</head>", [...tags, "</head>"].join("\n  "));
     },
   };
 }
