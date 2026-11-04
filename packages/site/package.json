@@ -17,7 +17,7 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
-    "@mark1russell7/cue": "^1.0.2",
+    "@mark1russell7/cue": "^2.1.1",
     "@mark1russell7/rigor-bench": "^0.2.6",
     "@types/node": "^26.6.4",
     "@types/react": "^19.3.0",
