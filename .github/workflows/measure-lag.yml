@@ -9,6 +9,7 @@ on:
       - .github/workflows/measure-lag.yml
       - packages/site/scripts/measure-lag.mjs
       - packages/site/scripts/check-live.mjs
+      - packages/site/scripts/check-sites.mjs
 
 permissions:
   contents: read
@@ -27,7 +28,6 @@ jobs:
       matrix:
         include:
           - { shard: pair-phone, target: built, modes: "causes", widths: "360" }
-          - { shard: pair-desktop, target: built, modes: "causes", widths: "1280" }
           - { shard: census-built, target: built, modes: "census", widths: "360,1280" }
     env:
       LAG_SHARD: ${{ matrix.shard }}
@@ -46,7 +46,7 @@ jobs:
       - name: Install the tools of the measurement
         run: |
           mkdir -p "$RUNNER_TEMP/lag-tools"
-          cp packages/site/scripts/measure-lag.mjs packages/site/scripts/check-live.mjs "$RUNNER_TEMP/lag-tools/"
+          cp packages/site/scripts/measure-lag.mjs packages/site/scripts/check-live.mjs packages/site/scripts/check-sites.mjs "$RUNNER_TEMP/lag-tools/"
           cd "$RUNNER_TEMP/lag-tools"
           npm init -y > /dev/null
           npm pkg set type=module
@@ -91,6 +91,12 @@ jobs:
             npx playwright screenshot --viewport-size="$size" --wait-for-timeout=4000 "$LAG_BASE/" "$LAG_OUT/shots/after-${size%,*}.png"
             npx playwright screenshot --viewport-size="$size" --wait-for-timeout=4000 "$LAG_BEFORE_BASE/" "$LAG_OUT/shots/before-${size%,*}.png"
           done
+      - name: Check the deployed sites
+        if: matrix.shard == 'census-built'
+        working-directory: ${{ runner.temp }}/lag-tools
+        run: |
+          curl -fsS https://raw.githubusercontent.com/mark1russell7/highways/fcf4f2163f8404a095dee971a7df262d284a3e68/packages/site/src/style.css -o highways-style.css
+          node check-sites.mjs | tee "$LAG_OUT/check-sites.txt"
       - name: Measure
         # This limit is lower than the limit of the job, so the summary and the upload still run.
         timeout-minutes: 78

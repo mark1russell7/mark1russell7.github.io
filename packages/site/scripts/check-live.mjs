@@ -66,6 +66,23 @@ const browser = await chromium.launch();
   await sleep(1800);
   check("a mouse that rests on a card starts one frame", (await frames(page)) === 1, await frames(page));
   await page.screenshot({ path: join(OUT, "pond-1280-hover.png") });
+  // A series tells a mark that stays from a mark of one frame.
+  for (const [index, wait] of [300, 700, 1000, 2000, 4000].entries()) {
+    await sleep(wait);
+    await page.screenshot({ path: join(OUT, `pond-1280-hover-${index}.png`) });
+    const boxes = await page.evaluate(() => {
+      const box = (element) => {
+        const rect = element.getBoundingClientRect();
+        return [rect.x, rect.y, rect.width, rect.height].map(Math.round).join(",");
+      };
+      return [...document.querySelectorAll("iframe")].map((frame) => ({
+        frame: box(frame),
+        opacity: getComputedStyle(frame).opacity,
+        parent: box(frame.parentElement),
+      }));
+    });
+    console.log(`hover shot ${index}: ${JSON.stringify(boxes)}`);
+  }
 
   let most = 0;
   const watch = setInterval(() => {
