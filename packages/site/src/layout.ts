@@ -1,4 +1,5 @@
-import { CAPTION_HEIGHT, FRAME_HEIGHT, FRAME_WIDTH } from "./cards.tsx";
+import { CAPTION_HEIGHT } from "./cards.tsx";
+import { FRAME_HEIGHT, FRAME_WIDTH } from "./content.ts";
 import type { Item, Pebble, Site, Tile } from "./content.ts";
 
 /** The items of a list by kind. The layouts use these groups, so each new site gets a place without a change to a layout. */

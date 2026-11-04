@@ -65,6 +65,9 @@ __pycache__/
 build/
 develop-eggs/
 dist/
+
+# The Pages workflow takes the posters of the cards
+packages/site/public/posters/
 downloads/
 eggs/
 .eggs/

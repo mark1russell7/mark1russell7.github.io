@@ -1,4 +1,5 @@
-import { CAPTION_HEIGHT, FRAME_HEIGHT, FRAME_WIDTH } from "../cards.tsx";
+import { CAPTION_HEIGHT } from "../cards.tsx";
+import { FRAME_HEIGHT, FRAME_WIDTH } from "../content.ts";
 import type { Item, Tile } from "../content.ts";
 import { columnOrder, groups, rowSizes } from "../layout.ts";
 
