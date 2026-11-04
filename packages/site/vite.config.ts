@@ -113,12 +113,13 @@ function seo(): Plugin {
  * The page needs both posters at each width, so this adds no bytes. The Pages workflow writes the list of posters before the build.
  */
 function preloadPosters(): Plugin {
-  const first = sites.filter((site) => posterIds.includes(site.id)).slice(0, 2);
-  const links = first.map((site) => `<link rel="preload" as="image" href="/posters/${site.id}.webp" type="image/webp" fetchpriority="high" />`);
+  const posters: ReadonlySet<string> = new Set(posterIds);
+  const first = sites.filter((site) => posters.has(site.id)).slice(0, 2);
+  const tags = first.map((site) => `  <link rel="preload" as="image" href="/posters/${site.id}.webp" type="image/webp" fetchpriority="high" />`);
   return {
     name: "portfolio-preload-posters",
     transformIndexHtml(html) {
-      return html.replace("</head>", `${links.map((link) => `  ${link}\n`).join("")}  </head>`);
+      return html.replace("</head>", [...tags, "</head>"].join("\n  "));
     },
   };
 }
