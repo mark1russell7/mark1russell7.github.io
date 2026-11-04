@@ -40,7 +40,8 @@ The statuses are `done`, `in progress`, `next` and `later`.
 | P15 | The Pond shows a poster for each card, and a site starts only on request | done (2026-11-04) | P2 | #94 |
 | P16 | The Board and the River show posters in the same way | done (2026-11-04) | P15 | #96 |
 | P17 | Find the cause of the slow Pond rounds on a phone, and of the late poster paint, with a CPU trace in CI | done (2026-11-04) | P15 | #99 |
-| P18 | Remove the blur behind the tiles | in progress | P17 | |
+| P18 | Remove the blur behind the tiles | done (2026-11-04) | P17 | #100 |
+| P19 | A limit on the lag of the site in CI | in progress | P18 | |
 
 P15 appeared to have two modes on a phone at 360, four times slower than a normal CPU.
 The two modes were a fault of the measure, which dropped a task that started before the first paint.
@@ -68,5 +69,17 @@ P18 removes `backdrop-filter` from the tiles. The tile plate is 86% opaque, so t
 | Board, 1280 | 41.2 | 60 | 60 |
 
 These numbers compare arms inside one run. They do not give the frame rate on a real device.
+
+P19 adds the workflow `lag-budget.yml`. At 360, with a CPU four times slower, the median of 6 rounds of each route stays at or below these limits.
+
+| Measure | Limit | Largest A/A difference |
+| --- | ---: | ---: |
+| Total blocking time | 450 ms | 200 ms |
+| Longest task | 450 ms | 200 ms |
+| Frames of the page | 2 | 1 |
+| Nodes | 5000 | 500 |
+
+Only the outcome `within` passes. A control round in each run has a task of 800 ms, so the run proves that the measure can see a long task.
+The runner has no GPU, so the frame rate has no limit.
 
 The transparent rectangle that a visitor saw is not reproduced in a software renderer. No real GPU was tested, so it is not shown as fixed.
