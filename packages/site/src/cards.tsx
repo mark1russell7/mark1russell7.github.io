@@ -66,6 +66,12 @@ export function useSiteExists(site: Site): boolean | null {
 }
 
 /**
+ * A frame with an opacity of 1 left a transparent rectangle in the water under the pool, in screenshots and in screencast frames of a software renderer.
+ * This value keeps the frame out of the opaque layers of the compositor, and the rectangle goes. A person cannot see the difference.
+ */
+const LOADED_OPACITY = 0.999;
+
+/**
  * This component shows a site live in a frame. The frame has the size of a desktop viewport, and a transform scales it to the box.
  * The frame covers the box, and the box clips the edges of the frame.
  */
@@ -81,7 +87,7 @@ function LiveFrame(props: { site: Site; width: number; height: number; interacti
     height: FRAME_HEIGHT,
     transform: `translate(${offsetX}px, ${offsetY}px) scale(${scale})`,
     pointerEvents: interactive ? "auto" : "none",
-    opacity: loaded ? 1 : 0,
+    opacity: loaded ? LOADED_OPACITY : 0,
   };
   return (
     <iframe
