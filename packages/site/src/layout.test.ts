@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { desktopWorld, phoneWorld } from "./board/places.ts";
 import { curated, type Discovered, type Item, items, mergeSites, pebbles, sites, tiles } from "./content.ts";
 import discovered from "./discovered.json" with { type: "json" };
-import { columnOrder, plateSize, rowSizes } from "./layout.ts";
+import { columnOrder, plateSize, relax, rowSizes } from "./layout.ts";
 import { MIN_SCALE, pondDesktop, pondPhone } from "./pond/homes.ts";
 import { riverPlan } from "./river/lanes.ts";
 
@@ -182,6 +182,19 @@ function withSites(count: number): readonly Item[] {
 
 /** The lists of the pond: today's items, and lists with 24, 40 and 80 sites. */
 const pondLists: readonly (readonly [string, readonly Item[]])[] = [...lists, ...[24, 40, 80].map((count) => [`${count} sites`, withSites(count)] as const)];
+
+describe("relax", () => {
+  test("a box that an edge moves does not stay on a box that had no overlap before the move", () => {
+    const boxes = [
+      { id: "p", x: 100, y: 100, w: 100, h: 100 },
+      { id: "q", x: 100, y: 212, w: 100, h: 100 },
+    ];
+    expect(relax(boxes, 400, 250, 10, 20, 50)).toBe(true);
+    const [p, q] = boxes as [(typeof boxes)[0], (typeof boxes)[0]];
+    expect(q.y - p.y).toBeGreaterThanOrEqual(110 - 0.01);
+    expect(q.y + q.h / 2).toBeLessThanOrEqual(230);
+  });
+});
 
 describe("pond", () => {
   test("the lists of the pond have the number of sites in their names", () => {

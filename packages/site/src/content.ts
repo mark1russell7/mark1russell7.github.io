@@ -391,6 +391,18 @@ export const curated: readonly Site[] = [
     focus: "#try",
     repo: `${github}/docker-mongo`,
   },
+  {
+    kind: "site",
+    id: "docker-sqlite",
+    name: "docker-sqlite",
+    path: "/docker-sqlite/",
+    tagline: "SQLite for Node.js with no native build",
+    blurb: "SQLite for Node.js on sql.js, so it needs no native build. It gives functions for queries and migrations, and it writes a database file only when the content changed. A Compose file starts the sqlite-web interface on the loopback address. The site runs real SQLite in your browser. Edit a migration, start it, and read the SQL of each call in the log.",
+    hue: "#B8C2EA",
+    tier: 2,
+    focus: "#try",
+    repo: `${github}/docker-sqlite`,
+  },
 ];
 
 /**
