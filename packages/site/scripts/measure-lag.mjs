@@ -213,6 +213,16 @@ const CENSUS_INIT = `(() => {
 })();`;
 
 const ARM_INIT = {
+  sync: `(() => {
+    if (window.top !== window) return;
+    const first = "img[loading=lazy][src$='/systems.webp'], img[loading=lazy][src$='/client.webp']";
+    new MutationObserver(() => {
+      for (const image of document.querySelectorAll(first)) {
+        image.decoding = "sync";
+        image.loading = "eager";
+      }
+    }).observe(document, { childList: true, subtree: true });
+  })();`,
   nowebgl: `(() => {
     if (window.top !== window) return;
     const get = HTMLCanvasElement.prototype.getContext;
@@ -601,7 +611,7 @@ function gridCases() {
 function causeCases() {
   const out = [];
   for (const condition of CONDITIONS.filter((c) => c.rate === (c.width === 360 ? 4 : 1))) {
-    for (const arm of ["base", "aa", "before"]) out.push({ route: "pond", arm, ...condition });
+    for (const arm of ["base", "aa", "sync"]) out.push({ route: "pond", arm, ...condition });
   }
   return out;
 }
