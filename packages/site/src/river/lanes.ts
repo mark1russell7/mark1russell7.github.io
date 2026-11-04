@@ -30,14 +30,16 @@ function weave(sites: readonly Site[], tiles: readonly Tile[]): Item[] {
 /**
  * This function gives the three lanes of the river from the items of `list`. The far lane has the pebbles.
  * The middle lane has the tier 2 sites, and the front lane has the featured sites. The number of items in a lane sets its length.
+ * With no pebbles the far lane is empty, so the other lanes move up into its place.
  */
 export function riverLanes(list: readonly Item[]): Lane[] {
   const { featured, sites, tiles, pebbles } = groups(list);
   const of = (lane: "middle" | "front"): Tile[] => tiles.filter((tile) => tileSlots[tile.id].lane === lane);
+  const far = pebbles.length > 0;
   return [
     { items: pebbles, depth: 0.74, y: 0.13, speed: 0.5 },
-    { items: weave(sites, of("middle")), depth: 0.8, y: 0.4, speed: 0.72 },
-    { items: weave(featured, of("front")), depth: 1, y: 0.73, speed: 1 },
+    { items: weave(sites, of("middle")), depth: 0.8, y: far ? 0.4 : 0.27, speed: 0.72 },
+    { items: weave(featured, of("front")), depth: 1, y: far ? 0.73 : 0.68, speed: 1 },
   ];
 }
 
