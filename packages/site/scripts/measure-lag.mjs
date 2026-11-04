@@ -601,7 +601,7 @@ function gridCases() {
 function causeCases() {
   const out = [];
   for (const condition of CONDITIONS.filter((c) => c.rate === (c.width === 360 ? 4 : 1))) {
-    for (const arm of ["base", "aa", "before", "reduced"]) out.push({ route: "pond", arm, ...condition });
+    for (const arm of ["base", "aa", "before", "nowebgl"]) out.push({ route: "pond", arm, ...condition });
   }
   return out;
 }

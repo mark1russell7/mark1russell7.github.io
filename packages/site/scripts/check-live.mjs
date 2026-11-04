@@ -123,6 +123,19 @@ const browser = await chromium.launch();
     console.log(`hover shot ${index}: ${JSON.stringify(boxes)}`);
     await hole(page, join(OUT, `pond-1280-hover-${index}.png`), `hover ${index}`);
   }
+  const inside = await page.evaluate(() => {
+    const frame = document.querySelector("iframe");
+    const rect = frame.getBoundingClientRect();
+    const view = frame.contentWindow;
+    return { rect: [rect.x, rect.y, rect.width, rect.height].map(Math.round), scrollX: view?.scrollX, scrollY: view?.scrollY, inner: view?.innerHeight, scale: rect.width / view.innerWidth };
+  });
+  console.log(`frame inside: ${JSON.stringify(inside)}; a hole from its unscrolled content starts near y ${Math.round(inside.rect[1] + inside.scrollY * inside.scale)}`);
+  await page.addStyleTag({ content: ".frame iframe { opacity: 0.999 !important; }" });
+  await sleep(1500);
+  await page.screenshot({ path: join(OUT, "pond-1280-hover-translucent.png") });
+  await hole(page, join(OUT, "pond-1280-hover-translucent.png"), "hover, translucent frame");
+  await screencast(page, join(OUT, "pond-1280-hover-translucent-cast.png"));
+  await hole(page, join(OUT, "pond-1280-hover-translucent-cast.png"), "hover, translucent frame, screencast");
   await screencast(page, join(OUT, "pond-1280-hover-cast.png"));
   await hole(page, join(OUT, "pond-1280-hover-cast.png"), "hover screencast");
 
