@@ -20,7 +20,7 @@ jobs:
   measure:
     name: ${{ matrix.shard }}
     runs-on: ubuntu-latest
-    timeout-minutes: 85
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -38,6 +38,8 @@ jobs:
       LAG_OUT: ${{ github.workspace }}/lag-records
       LAG_REPEATS: "1"
       LAG_IDLE_MS: "4000"
+      LAG_BUDGET_MIN: "18"
+      LAG_SAMPLE_LIMIT_MS: "120000"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # The pnpm version comes from "packageManager" in package.json
@@ -69,6 +71,8 @@ jobs:
           curl -fsS http://localhost:4173/ > /dev/null
           echo "LAG_BASE=http://localhost:4173" >> "$GITHUB_ENV"
       - name: Measure
+        # This limit is lower than the limit of the job, so the summary and the upload still run.
+        timeout-minutes: 25
         working-directory: ${{ runner.temp }}/lag-tools
         run: node measure-lag.mjs
       - name: Summarize

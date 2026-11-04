@@ -8,6 +8,7 @@
 //   probe     a CDP Profiler capture and a trace of each route.
 //   summarize writes summary.json and summary.md from the records.
 
+import { spawnSync } from "node:child_process";
 import { appendFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { cpus, loadavg } from "node:os";
 import { join } from "node:path";
@@ -29,7 +30,18 @@ const WIDTHS = (env.LAG_WIDTHS ?? "360,1280").split(",").map(Number);
 const SCROLL_PX_S = 1000;
 const SCROLL_MAX_S = 15;
 const WHEEL_PX = 4000;
-const SAMPLE_LIMIT_MS = 240000;
+const GOTO_LIMIT_MS = 90000;
+/** One sample stops at this limit. It closes its browser and writes a record with the stage that it reached. */
+const SAMPLE_LIMIT_MS = Number(env.LAG_SAMPLE_LIMIT_MS ?? 180000);
+const CENSUS_LIMIT_MS = 240000;
+const PROBE_LIMIT_MS = 420000;
+/** One read of one frame stops at this limit. A frame that does not answer never blocks the sample. */
+const FRAME_READ_LIMIT_MS = 5000;
+const CENSUS_READ_LIMIT_MS = 20000;
+/** The script stops new work after this time, so the summary and the upload always run. */
+const BUDGET_MS = Number(env.LAG_BUDGET_MIN ?? 70) * 60000;
+const STARTED = Date.now();
+const overBudget = () => Date.now() - STARTED > BUDGET_MS;
 
 const CONDITIONS = [
   { width: 360, height: 780, rate: 1 },
@@ -45,6 +57,65 @@ mkdirSync(OUT, { recursive: true });
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const round = (value, digits = 2) => (Number.isFinite(value) ? Number(value.toFixed(digits)) : null);
 const urlOf = (route) => (route === "pond" ? `${BASE}/` : `${BASE}/#${route}`);
+
+process.on("unhandledRejection", (error) => console.log(`unhandled rejection: ${String(error).slice(0, 200)}`));
+
+/** The stage of the current sample. The progress lines and the record of a stuck sample give it. */
+let stage = { name: "start", at: Date.now(), first: Date.now(), list: [] };
+
+function enter(name) {
+  const at = Date.now();
+  stage.list.push({ name: stage.name, ms: at - stage.at });
+  console.log(`  +${Math.round((at - stage.first) / 1000)} s ${name}`);
+  stage.name = name;
+  stage.at = at;
+}
+
+function begin(label) {
+  const at = Date.now();
+  stage = { name: "start", at, first: at, list: [] };
+  console.log(`[${Math.round((at - STARTED) / 1000)} s] ${label}`);
+}
+
+/** The browsers that are open. A case that passes its limit closes them here, because its own finally block never runs. */
+const browsers = new Set();
+
+async function closeBrowser(browser) {
+  browsers.delete(browser);
+  await Promise.race([browser.close().catch(() => {}), sleep(10000)]);
+}
+
+async function closeAll() {
+  const open = [...browsers];
+  await Promise.all(open.map(closeBrowser));
+  // A browser that does not close keeps the CPU busy and keeps Node alive, so the next samples become wrong.
+  if (open.length) spawnSync("pkill", ["-9", "-x", "chrome"]);
+}
+
+/** This function stops `work` at the limit. It closes the browsers, and the error names the stage. */
+async function limited(label, ms, work) {
+  let timer;
+  const limit = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} passed its limit of ${ms} ms in the stage "${stage.name}"`)), ms);
+  });
+  try {
+    return await Promise.race([work(), limit]);
+  } catch (error) {
+    console.log(`  STOPPED: ${String(error).slice(0, 200)}`);
+    await closeAll();
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** A frame with no URL has no document: for example a lazy iframe that the browser did not load. An evaluate in it never ends. */
+const hasDocument = (frame) => !frame.isDetached() && frame.url() !== "" && frame.url() !== "about:blank";
+
+/** This function reads a value from one frame. It gives null when the frame does not answer in time. */
+function read(frame, fn, ms = FRAME_READ_LIMIT_MS) {
+  return Promise.race([frame.evaluate(fn).catch(() => null), sleep(ms).then(() => null)]);
+}
 
 /** This script runs before each document of each frame. It uses only observers and one rAF loop, so LoAF attribution stays correct. */
 const INIT = `(() => {
@@ -158,6 +229,7 @@ function calibrate() {
 
 async function open(c, { arm = "base", census = false } = {}) {
   const browser = await chromium.launch({ channel: "chromium", headless: true, args: ARGS });
+  browsers.add(browser);
   const context = await browser.newContext({
     viewport: { width: c.width, height: c.height },
     deviceScaleFactor: 1,
@@ -204,17 +276,14 @@ async function metrics(cdp) {
   return Object.fromEntries(list.map((m) => [m.name, m.value]));
 }
 
-/** This function reads the records of each frame. A frame that the page removed gives nothing. */
+/** This function reads the records of each frame in parallel. The array also tells how many frames had no document or gave no answer. */
 async function collect(page) {
-  const parts = [];
-  for (const frame of page.frames()) {
-    try {
-      const part = await frame.evaluate(() => (window.__lag ? { ...window.__lag, nav: performance.getEntriesByType("navigation")[0]?.toJSON() } : null));
-      if (part) parts.push(part);
-    } catch {
-      // The frame is gone.
-    }
-  }
+  const frames = page.frames();
+  const ready = frames.filter(hasDocument);
+  const answers = await Promise.all(ready.map((frame) => read(frame, () => (window.__lag ? { ...window.__lag, nav: performance.getEntriesByType("navigation")[0]?.toJSON() } : null))));
+  const parts = answers.filter(Boolean);
+  parts.frameCount = { all: frames.length, noDocument: frames.length - ready.length, noAnswer: ready.length - parts.length };
+  console.log(`    frames: ${JSON.stringify(parts.frameCount)}`);
   return parts;
 }
 
@@ -395,19 +464,26 @@ async function siteMeter(page) {
   });
 }
 
-async function sample(c) {
+/** This function fills `record` as it goes, so a sample that stops still leaves the stages that ended. */
+async function sample(c, record) {
   const { arm } = c;
+  enter("launch");
   const session = await open(c, { arm });
   const { browser, page, cdp, requests, errors } = session;
   try {
-    await page.goto(urlOf(c.route), { waitUntil: "load", timeout: 120000 });
+    enter("goto");
+    await page.goto(urlOf(c.route), { waitUntil: "load", timeout: GOTO_LIMIT_MS });
     const loadAt = Date.now();
+    enter("settle");
     await sleep(SETTLE_MS);
     const windowEnd = Date.now();
+    enter("read load");
     const atSettle = await metrics(cdp);
     const parts0 = await collect(page);
-    const load = loadRecord(parts0, requests, loadAt, windowEnd, atSettle);
+    record.frameCount = parts0.frameCount;
+    record.load = loadRecord(parts0, requests, loadAt, windowEnd, atSettle);
 
+    enter("idle");
     const idleBefore = await metrics(cdp);
     const idleStart = Date.now();
     await sleep(IDLE_MS);
@@ -415,23 +491,26 @@ async function sample(c) {
     const idleAfter = await metrics(cdp);
     const meter = await siteMeter(page).catch(() => null);
 
+    enter("scroll");
     const scrollBefore = await metrics(cdp);
     const scrollStart = Date.now();
     const scroll = await scrollDown(page, cdp, c.width, c.height);
     const scrollEnd = Date.now();
     const scrollAfter = await metrics(cdp);
+    enter("read end");
     const parts = await collect(page);
+    record.frameCountEnd = parts.frameCount;
     const afterLoad = loadRecord(parts, requests, loadAt, windowEnd, scrollAfter);
-    return {
-      load,
+    Object.assign(record, {
       afterScroll: afterLoad.stats,
       idle: { ...phase(parts, idleStart, idleEnd, idleBefore, idleAfter), meter },
       scroll: { ...phase(parts, scrollStart, scrollEnd, scrollBefore, scrollAfter), gesture: scroll },
       errors,
       unsupported: [...new Set(parts.flatMap((p) => p.unsupported))],
-    };
+    });
   } finally {
-    await browser.close().catch(() => {});
+    enter("close");
+    await closeBrowser(browser);
   }
 }
 
@@ -441,20 +520,29 @@ function caseName(c) {
 
 async function runRounds(cases, file) {
   const path = join(OUT, file);
+  const count = cases.length * REPEATS;
+  let done = 0;
   for (let r = 0; r < REPEATS; r++) {
     const shift = cases.length ? (r * 7) % cases.length : 0;
     const order = [...cases.slice(shift), ...cases.slice(0, shift)];
     for (const c of order) {
+      if (overBudget()) {
+        console.log(`The budget ended after ${done} of ${count} samples.`);
+        return;
+      }
+      done += 1;
+      begin(`sample ${done}/${count} ${caseName(c)} round ${r}`);
       const record = { target: TARGET, shard: SHARD, case: caseName(c), ...c, round: r, calibrateMs: calibrate().ms, load1: loadavg()[0], startedAt: new Date().toISOString() };
       const started = Date.now();
       try {
-        const result = await Promise.race([sample(c), sleep(SAMPLE_LIMIT_MS).then(() => Promise.reject(new Error("The sample passed its time limit.")))]);
-        Object.assign(record, result);
+        await limited(caseName(c), SAMPLE_LIMIT_MS, () => sample(c, record));
       } catch (error) {
         record.error = String(error).slice(0, 400);
+        record.stoppedIn = stage.name;
       }
+      record.stages = stage.list;
       appendFileSync(path, `${JSON.stringify(record)}\n`);
-      console.log(`${record.case} round ${r}: ${Math.round((Date.now() - started) / 1000)} s ${record.error ?? ""}`);
+      console.log(`${record.case} round ${r}: ${Math.round((Date.now() - started) / 1000)} s ${record.error ?? "ok"}`);
     }
   }
 }
@@ -476,10 +564,13 @@ function causeCases() {
 }
 
 async function censusFrames(page) {
-  const out = [];
-  for (const frame of page.frames()) {
-    try {
-      const entry = await frame.evaluate(() => {
+  const frames = page.frames();
+  const ready = frames.filter(hasDocument);
+  const entries = await Promise.all(
+    ready.map((frame) =>
+      read(
+        frame,
+        () => {
         const c = window.__census;
         const seconds = c ? (performance.now() - c.since) / 1000 : 1;
         const all = [...document.querySelectorAll("*")];
@@ -513,19 +604,21 @@ async function censusFrames(page) {
           animationsRunning: animations.length,
           animationsInfinite: animations.filter((a) => a.effect?.getTiming?.().iterations === Infinity).length,
         };
-      });
-      out.push(entry);
-    } catch {
-      // The frame is gone.
-    }
-  }
+        },
+        CENSUS_READ_LIMIT_MS,
+      ),
+    ),
+  );
+  const out = entries.filter(Boolean);
+  out.frameCount = { all: frames.length, noDocument: frames.length - ready.length, noAnswer: ready.length - out.length };
+  console.log(`    frames: ${JSON.stringify(out.frameCount)}`);
   return out;
 }
 
 function censusSummary(frames) {
   const live = frames.filter((f) => !f.path.startsWith("about:") && f.path !== "blank");
   return {
-    frames: frames.length,
+    frames: frames.frameCount,
     documentsLoaded: live.length,
     nodesAll: live.reduce((a, f) => a + f.nodes, 0),
     rafPerSAll: round(live.reduce((a, f) => a + (f.rafPerS ?? 0), 0), 1),
@@ -547,27 +640,37 @@ async function runCensus() {
   const records = [];
   for (const route of ROUTES) {
     for (const condition of CONDITIONS.filter((c) => c.rate === 1)) {
+      if (overBudget()) {
+        console.log("The budget ended in the census.");
+        return;
+      }
       const c = { route, ...condition };
-      const session = await open(c, { census: true });
-      const { browser, page, cdp, requests } = session;
       const record = { target: TARGET, ...c };
-      try {
+      begin(`census ${route} ${c.width}`);
+      const work = async () => {
+        enter("launch");
+        const session = await open(c, { census: true });
+        const { browser, page, cdp, requests } = session;
+        try {
         let layers = [];
         cdp.on("LayerTree.layerTreeDidChange", (e) => {
           if (e.layers) layers = e.layers;
         });
         await cdp.send("LayerTree.enable");
-        await page.goto(urlOf(route), { waitUntil: "load", timeout: 120000 });
+        enter("goto");
+        await page.goto(urlOf(route), { waitUntil: "load", timeout: GOTO_LIMIT_MS });
+        enter("settle");
         await sleep(SETTLE_MS);
         const reset = () =>
           Promise.all(
-            page.frames().map((f) =>
-              f
-                .evaluate(() => {
+            page
+              .frames()
+              .filter(hasDocument)
+              .map((f) =>
+                read(f, () => {
                   if (window.__census) Object.assign(window.__census, { raf: 0, timeouts: 0, intervalFires: 0, since: performance.now() });
-                })
-                .catch(() => {}),
-            ),
+                }),
+              ),
           );
         const window5 = async () => {
           await reset();
@@ -575,28 +678,40 @@ async function runCensus() {
           const frames = await censusFrames(page);
           return { summary: censusSummary(frames), frames, layers: layers.length, layerMemoryMb: round(layers.reduce((a, l) => a + l.width * l.height * 4, 0) / 1048576, 1), m: await metrics(cdp) };
         };
+        enter("count after load");
         record.afterLoad = await window5();
-        await page.screenshot({ path: join(OUT, `shot-${route}-${c.width}-load.png`), timeout: 60000 }).catch(() => {});
+        enter("screenshot after load");
+        await page.screenshot({ path: join(OUT, `shot-${route}-${c.width}-load.png`), timeout: 30000 }).catch((error) => console.log(`    no screenshot: ${String(error).slice(0, 120)}`));
+        enter("scroll");
         record.scroll = await scrollDown(page, cdp, c.width, c.height);
         await sleep(SETTLE_MS);
+        enter("count after scroll");
         record.afterScroll = await window5();
-        await page.screenshot({ path: join(OUT, `shot-${route}-${c.width}-scrolled.png`), timeout: 60000 }).catch(() => {});
+        enter("screenshot after scroll");
+        await page.screenshot({ path: join(OUT, `shot-${route}-${c.width}-scrolled.png`), timeout: 30000 }).catch((error) => console.log(`    no screenshot: ${String(error).slice(0, 120)}`));
+        enter("renderer");
         record.gl = await page.evaluate(() => {
           const gl = document.createElement("canvas").getContext("webgl");
           const info = gl?.getExtension("WEBGL_debug_renderer_info");
           return gl ? { vendor: gl.getParameter(info?.UNMASKED_VENDOR_WEBGL ?? gl.VENDOR), renderer: gl.getParameter(info?.UNMASKED_RENDERER_WEBGL ?? gl.RENDERER) } : null;
         });
         record.requests = [...requests.values()].filter((r) => r.type === "Document" || r.method === "HEAD").map((r) => `${r.method} ${r.status} ${r.url}`.slice(0, 120));
+        } finally {
+          enter("close");
+          await closeBrowser(browser);
+        }
+      };
+      try {
+        await limited(`census ${route} ${c.width}`, CENSUS_LIMIT_MS, work);
       } catch (error) {
         record.error = String(error).slice(0, 400);
-      } finally {
-        await browser.close().catch(() => {});
+        record.stoppedIn = stage.name;
       }
       records.push(record);
+      writeFileSync(join(OUT, `census-${SHARD}.json`), JSON.stringify(records, null, 1));
       console.log(`census ${route} ${c.width}: ${record.error ?? "ok"}`);
     }
   }
-  writeFileSync(join(OUT, `census-${SHARD}.json`), JSON.stringify(records, null, 1));
 }
 
 const mapCache = new Map();
@@ -722,13 +837,21 @@ async function runProbe() {
     }
   };
   for (const c of cases) {
+    if (overBudget()) {
+      console.log("The budget ended in the probe.");
+      return;
+    }
     const stem = `${c.route}-${c.width}-x${c.rate}`;
+    begin(`probe ${stem}`);
     // The profile. The sample interval is 1 ms, so the overhead stays small.
-    {
+    const profileWork = async () => {
+      enter("launch for profile");
       const { browser, page, cdp } = await open(c);
       try {
-        await page.goto(urlOf(c.route), { waitUntil: "load", timeout: 120000 });
+        enter("goto");
+        await page.goto(urlOf(c.route), { waitUntil: "load", timeout: GOTO_LIMIT_MS });
         await sleep(SETTLE_MS);
+        enter("profile idle");
         await cdp.send("Profiler.enable");
         await cdp.send("Profiler.setSamplingInterval", { interval: 1000 });
         const profiled = async (work) => {
@@ -737,32 +860,37 @@ async function runProbe() {
           return (await cdp.send("Profiler.stop")).profile;
         };
         await capture(c, "idle", "profile", `profile-${stem}-idle`, () => profiled(() => sleep(IDLE_MS)));
+        enter("profile scroll");
         await capture(c, "scroll", "profile", `profile-${stem}-scroll`, () => profiled(() => scrollDown(page, cdp, c.width, c.height)));
-      } catch (error) {
-        summaries.push({ ...c, kind: "profile", error: String(error).slice(0, 400) });
       } finally {
-        await browser.close().catch(() => {});
+        enter("close");
+        await closeBrowser(browser);
       }
-    }
+    };
+    await limited(`profile ${stem}`, PROBE_LIMIT_MS, profileWork).catch((error) => summaries.push({ ...c, kind: "profile", error: String(error).slice(0, 400), stoppedIn: stage.name }));
     // The trace is a second page, so its overhead does not change the profile.
-    {
+    const traceWork = async () => {
+      enter("launch for trace");
       const { browser, page, cdp } = await open(c);
       try {
-        await page.goto(urlOf(c.route), { waitUntil: "load", timeout: 120000 });
+        enter("goto");
+        await page.goto(urlOf(c.route), { waitUntil: "load", timeout: GOTO_LIMIT_MS });
         await sleep(SETTLE_MS);
+        enter("trace idle");
         const traced = async (work) => {
           await browser.startTracing(page, { categories: TRACE_CATEGORIES });
           await work();
           return browser.stopTracing();
         };
         await capture(c, "idle", "trace", `trace-${stem}-idle`, () => traced(() => sleep(Math.min(IDLE_MS, 6000))));
+        enter("trace scroll");
         await capture(c, "scroll", "trace", `trace-${stem}-scroll`, () => traced(() => scrollDown(page, cdp, c.width, c.height)));
-      } catch (error) {
-        summaries.push({ ...c, kind: "trace", error: String(error).slice(0, 400) });
       } finally {
-        await browser.close().catch(() => {});
+        enter("close");
+        await closeBrowser(browser);
       }
-    }
+    };
+    await limited(`trace ${stem}`, PROBE_LIMIT_MS, traceWork).catch((error) => summaries.push({ ...c, kind: "trace", error: String(error).slice(0, 400), stoppedIn: stage.name }));
     writeFileSync(join(OUT, `probe-${SHARD}.json`), JSON.stringify(summaries, null, 1));
     console.log(`probe ${stem} done`);
   }
@@ -809,6 +937,7 @@ function summarize() {
     summary[name] = {
       samples: list.length,
       errors: list.filter((r) => r.error).map((r) => r.error),
+      frameCount: usable.map((r) => r.frameCountEnd ?? r.frameCount),
       calibrateMs: spread(list.map((r) => r.calibrateMs)),
       load: pick((r) => r.load?.stats, LOAD_COLUMNS),
       afterScroll: pick((r) => r.afterScroll, LOAD_COLUMNS),
@@ -856,3 +985,7 @@ for (const mode of MODES) {
   if (mode === "probe") await runProbe();
   if (mode === "summarize") summarize();
 }
+
+// An open handle must not keep the job alive after the work ends.
+await closeAll();
+process.exit(0);
