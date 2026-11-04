@@ -26,6 +26,9 @@ interface Body extends Placed {
  * On a phone, the cards make a column that scrolls over the water. A tap makes a splash.
  * When the cards do not fit in one screen, the pond scrolls. The scroll moves the cards through the water.
  */
+/** A card starts at this opacity, so the poster shows in the first paint of the pool. The rest of the fade is the entrance of the card. */
+const FADE_START = 0.35;
+
 export function Pond({ onOpen, reduced, paused }: ConceptProps): ReactElement {
   const rootRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -233,7 +236,7 @@ export function Pond({ onOpen, reduced, paused }: ConceptProps): ReactElement {
       b.rot += (Math.max(-4, Math.min(4, b.vx * 0.012)) - b.rot) * (1 - Math.exp(-6 * dt));
       const scale = (0.9 + 0.1 * appear) * (1 + 0.04 * b.hover);
       element.style.transform = `translate3d(${(b.x - b.w / 2).toFixed(2)}px, ${(b.y - b.h / 2).toFixed(2)}px, 0) rotate(${b.rot.toFixed(2)}deg) scale(${scale.toFixed(4)})`;
-      element.style.opacity = appear.toFixed(3);
+      element.style.opacity = (FADE_START + (1 - FADE_START) * appear).toFixed(3);
       element.style.zIndex = b.hover > 0.05 ? "5" : "";
     }
   });
@@ -300,9 +303,10 @@ export function Pond({ onOpen, reduced, paused }: ConceptProps): ReactElement {
                   width={box.w}
                   height={box.h}
                   scale={box.k}
+                  onDemand
                   onOpen={onOpen}
                   className="floating"
-                  style={{ transform: `translate3d(${box.x - box.w / 2}px, ${box.y - box.h / 2}px, 0)`, opacity: reduced ? 1 : 0 }}
+                  style={{ transform: `translate3d(${box.x - box.w / 2}px, ${box.y - box.h / 2}px, 0)`, opacity: reduced ? 1 : FADE_START }}
                   cardRef={(element) => {
                     if (element) elements.current.set(box.id, element);
                     else elements.current.delete(box.id);

@@ -41,6 +41,10 @@ export interface Pebble {
 
 export type Item = Site | Tile | Pebble;
 
+/** The size of the viewport in the frame of a site, before the frame scales it. */
+export const FRAME_WIDTH = 1280;
+export const FRAME_HEIGHT = 800;
+
 const github = "https://github.com/mark1russell7";
 
 /** A public repository with a GitHub Pages site, as `scripts/discover.ts` found it. */

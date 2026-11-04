@@ -1,10 +1,8 @@
 import { type CSSProperties, type ReactElement, useEffect, useRef, useState } from "react";
-import { bio, type Item, links, type Pebble, proof, type Site, type Tile } from "./content.ts";
+import { bio, FRAME_HEIGHT, FRAME_WIDTH, type Item, links, type Pebble, proof, type Site, type Tile } from "./content.ts";
+import { useLive, useLiveCard } from "./live.ts";
 import { meter } from "./loop.ts";
-
-/** The size of the viewport in the frame of a site, before the frame scales it. */
-export const FRAME_WIDTH = 1280;
-export const FRAME_HEIGHT = 800;
+import posterIds from "./posters.json" with { type: "json" };
 
 /** The height of the caption under the frame of a site, in pixels. */
 export const CAPTION_HEIGHT = 58;
@@ -37,6 +35,8 @@ function prepareFrame(frame: HTMLIFrameElement, selector: string | undefined): v
   run();
 }
 
+const posters: ReadonlySet<string> = new Set(posterIds);
+
 const siteStatus = new Map<string, Promise<boolean>>();
 
 /**
@@ -66,13 +66,18 @@ export function useSiteExists(site: Site): boolean | null {
 }
 
 /**
- * This component shows a site live in a frame. The frame has the size of a desktop viewport, and a transform scales it to `width` and `height`.
+ * A frame at an opacity of 1 left a transparent rectangle in the water, in the pictures of a software renderer.
+ * This value keeps the frame out of the opaque layers of the compositor, and the rectangle goes. A person cannot see the difference.
+ */
+const LOADED_OPACITY = 0.999;
+
+/**
+ * This component shows a site live in a frame. The frame has the size of a desktop viewport, and a transform scales it to the box.
  * The frame covers the box, and the box clips the edges of the frame.
  */
-export function SiteFrame(props: { site: Site; width: number; height: number; interactive?: boolean }): ReactElement {
-  const { site, width, height, interactive = false } = props;
+function LiveFrame(props: { site: Site; width: number; height: number; interactive: boolean }): ReactElement {
+  const { site, width, height, interactive } = props;
   const [loaded, setLoaded] = useState(false);
-  const exists = useSiteExists(site);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const scale = Math.max(width / FRAME_WIDTH, height / FRAME_HEIGHT);
   const offsetX = (width - FRAME_WIDTH * scale) / 2;
@@ -82,29 +87,54 @@ export function SiteFrame(props: { site: Site; width: number; height: number; in
     height: FRAME_HEIGHT,
     transform: `translate(${offsetX}px, ${offsetY}px) scale(${scale})`,
     pointerEvents: interactive ? "auto" : "none",
-    opacity: loaded ? 1 : 0,
+    opacity: loaded ? LOADED_OPACITY : 0,
   };
   return (
+    <iframe
+      ref={frameRef}
+      src={site.path}
+      title={`The site of ${site.name}`}
+      tabIndex={interactive ? 0 : -1}
+      aria-hidden={interactive ? undefined : true}
+      style={frameStyle}
+      loading="lazy"
+      onLoad={() => {
+        if (frameRef.current) prepareFrame(frameRef.current, site.focus);
+        setLoaded(true);
+      }}
+    />
+  );
+}
+
+/**
+ * This component shows the poster of a site, and the site over it. With `onDemand`, the site loads only when the card is live.
+ * Each poster comes from the Pages workflow. A site with no poster keeps its social image or its name.
+ */
+export function SiteFrame(props: { site: Site; width: number; height: number; interactive?: boolean; onDemand?: boolean }): ReactElement {
+  const { site, width, height, interactive = false, onDemand = false } = props;
+  const exists = useSiteExists(site);
+  const live = useLive(site.id);
+  const shot = posters.has(site.id);
+  const social = !shot && site.poster;
+  return (
     <div className="frame" style={{ width, height, "--hue": site.hue } as CSSProperties}>
-      <div className="frame-poster" style={site.poster ? { backgroundImage: `url(${site.poster})` } : undefined}>
-        {site.poster ? null : <span>{site.name}</span>}
+      <div className="frame-poster" style={social ? { backgroundImage: `url(${site.poster})` } : undefined}>
+        {shot ? (
+          <img
+            src={`/posters/${site.id}.webp`}
+            width={FRAME_WIDTH / 2}
+            height={FRAME_HEIGHT / 2}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+          />
+        ) : social ? null : (
+          <span>{site.name}</span>
+        )}
         {exists === false ? <em>The site is on its way</em> : null}
       </div>
-      {exists ? (
-        <iframe
-        ref={frameRef}
-        src={site.path}
-        title={`The site of ${site.name}`}
-        tabIndex={interactive ? 0 : -1}
-        aria-hidden={interactive ? undefined : true}
-        style={frameStyle}
-        loading="lazy"
-        onLoad={() => {
-          if (frameRef.current) prepareFrame(frameRef.current, site.focus);
-          setLoaded(true);
-        }}
-      />
-      ) : null}
+      {exists && (live || !onDemand) ? <LiveFrame site={site} width={width} height={height} interactive={interactive} /> : null}
     </div>
   );
 }
@@ -309,6 +339,8 @@ export function PlateCard(props: {
   width: number;
   height: number;
   interactive?: boolean;
+  /** True when the card shows a poster until the user asks for the site. */
+  onDemand?: boolean;
   onOpen?: (id: string, element: HTMLElement) => void;
   cardRef?: (element: HTMLElement | null) => void;
   className?: string;
@@ -336,8 +368,9 @@ export function PlateCard(props: {
 
 /** This component shows a site as a flat card. When the site is not on the server yet, the card links to the repository. */
 function SiteCard(props: Parameters<typeof PlateCard>[0] & { site: Site; className: string; style: CSSProperties }): ReactElement {
-  const { site, width, height, onOpen, cardRef, interactive = false, scale = 1, className, style } = props;
+  const { site, width, height, onOpen, cardRef, interactive = false, onDemand = false, scale = 1, className, style } = props;
   const exists = useSiteExists(site);
+  const live = useLiveCard(site.id);
   const missing = exists === false;
   return (
     <a
@@ -348,13 +381,16 @@ function SiteCard(props: Parameters<typeof PlateCard>[0] & { site: Site; classNa
       data-id={site.id}
       draggable={false}
       aria-label={`${site.name}: ${site.blurb}`}
+      {...(onDemand ? live.handlers : undefined)}
       onClick={(event) => {
         if (missing || !onOpen || event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
         event.preventDefault();
+        // The panel loads the site, so the card lets its frame go.
+        live.stop();
         onOpen(site.id, event.currentTarget);
       }}
     >
-      <SiteFrame site={site} width={width} height={height - CAPTION_HEIGHT * scale} interactive={interactive} />
+      <SiteFrame site={site} width={width} height={height - CAPTION_HEIGHT * scale} interactive={interactive} onDemand={onDemand} />
       <SiteCaption site={site} scale={scale} />
     </a>
   );
