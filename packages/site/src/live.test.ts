@@ -42,6 +42,49 @@ describe("the live frames", () => {
     expect(frames.isLive("a")).toBe(false);
   });
 
+  it("keeps a held frame when a pointer rests on another card", () => {
+    const frames = new LiveFrames(1);
+    frames.hold("a");
+    frames.claim("b");
+    expect(frames.isLive("a")).toBe(true);
+    expect(frames.isLive("b")).toBe(false);
+  });
+
+  it("keeps a held frame when the pointer leaves its card", () => {
+    const frames = new LiveFrames(1);
+    frames.hold("a");
+    frames.release("a");
+    expect(frames.isLive("a")).toBe(true);
+  });
+
+  it("takes the frame of a card for a hold, and frees it after the hold", () => {
+    const frames = new LiveFrames(1);
+    frames.claim("a");
+    frames.hold("panel");
+    expect(frames.isLive("a")).toBe(false);
+    frames.letGo("panel");
+    expect(frames.isLive("panel")).toBe(false);
+    frames.claim("b");
+    expect(frames.isLive("b")).toBe(true);
+  });
+
+  it("keeps a frame through a hold of the card that has it", () => {
+    const frames = new LiveFrames(1);
+    const listener = vi.fn();
+    frames.claim("a");
+    frames.subscribe(listener);
+    frames.hold("a");
+    expect(frames.isLive("a")).toBe(true);
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("ignores the end of a hold of another card", () => {
+    const frames = new LiveFrames(1);
+    frames.hold("a");
+    frames.letGo("b");
+    expect(frames.isLive("a")).toBe(true);
+  });
+
   it("tells a listener only about a change", () => {
     const frames = new LiveFrames(1);
     const listener = vi.fn();
