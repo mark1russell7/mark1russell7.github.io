@@ -475,6 +475,18 @@ export const curated: readonly Site[] = [
     focus: "#try",
     repo: `${github}/ts-base`,
   },
+  {
+    kind: "site",
+    id: "tinyimages",
+    name: "TinyImages",
+    path: "/TinyImages/",
+    tagline: "The smallest files that image parsers take",
+    blurb: "A museum of very small image files, from a 5-byte SVG and a 35-byte GIF to a file that is also a shell script. The site tests each file in your browser. In its shrink lab you change the bytes, and the page shows if your browser still takes the result.",
+    hue: "#D4B483",
+    tier: 2,
+    focus: "#lab",
+    repo: `${github}/TinyImages`,
+  },
 ];
 
 /**
