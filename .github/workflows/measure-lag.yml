@@ -8,6 +8,7 @@ on:
     paths:
       - .github/workflows/measure-lag.yml
       - packages/site/scripts/measure-lag.mjs
+      - packages/site/scripts/check-live.mjs
 
 permissions:
   contents: read
@@ -25,11 +26,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { shard: live-grid, target: live, modes: "census,grid", widths: "360,1280" }
-          - { shard: built-grid, target: built, modes: "grid", widths: "360,1280" }
-          - { shard: causes-phone, target: live, modes: "causes", widths: "360" }
-          - { shard: causes-desktop, target: live, modes: "causes", widths: "1280" }
-          - { shard: probe-built, target: built, modes: "census,probe", widths: "360,1280" }
+          - { shard: pair-phone, target: built, modes: "causes", widths: "360" }
+          - { shard: pair-desktop, target: built, modes: "causes", widths: "1280" }
+          - { shard: census-built, target: built, modes: "census", widths: "360,1280" }
     env:
       LAG_SHARD: ${{ matrix.shard }}
       LAG_TARGET: ${{ matrix.target }}
@@ -47,7 +46,7 @@ jobs:
       - name: Install the tools of the measurement
         run: |
           mkdir -p "$RUNNER_TEMP/lag-tools"
-          cp packages/site/scripts/measure-lag.mjs "$RUNNER_TEMP/lag-tools/"
+          cp packages/site/scripts/measure-lag.mjs packages/site/scripts/check-live.mjs "$RUNNER_TEMP/lag-tools/"
           cd "$RUNNER_TEMP/lag-tools"
           npm init -y > /dev/null
           npm pkg set type=module
@@ -62,7 +61,18 @@ jobs:
           pnpm install --frozen-lockfile
           # The Pages workflow does this discovery before each build. Without it the built site has fewer cards than the live site.
           node packages/site/scripts/discover.ts
+          pnpm --filter @portfolio/site exec playwright install --with-deps chromium
+          node packages/site/scripts/posters.ts
           pnpm --filter @portfolio/site exec vite build --sourcemap
+          POSTERS=$(ls packages/site/dist/posters | wc -l)
+          BYTES=$(cat packages/site/dist/posters/* | wc -c)
+          echo "Posters: $POSTERS files, $BYTES bytes in all" | tee -a "$GITHUB_STEP_SUMMARY"
+          # The build of main, for the arm "before" of the same job
+          git fetch --depth=1 origin main
+          git worktree add "$RUNNER_TEMP/before" FETCH_HEAD
+          cp packages/site/src/discovered.json "$RUNNER_TEMP/before/packages/site/src/discovered.json"
+          ( cd "$RUNNER_TEMP/before" && pnpm install --frozen-lockfile && pnpm --filter @portfolio/site exec vite build --sourcemap )
+          ( cd "$RUNNER_TEMP/before" && nohup pnpm --filter @portfolio/site exec vite preview --port 4174 --strictPort > preview-before.log 2>&1 & )
           nohup pnpm --filter @portfolio/site exec vite preview --port 4173 --strictPort > preview.log 2>&1 &
           for attempt in $(seq 1 40); do
             curl -fsS http://localhost:4173/ > /dev/null && break
@@ -70,6 +80,17 @@ jobs:
           done
           curl -fsS http://localhost:4173/ > /dev/null
           echo "LAG_BASE=http://localhost:4173" >> "$GITHUB_ENV"
+          echo "LAG_BEFORE_BASE=http://localhost:4174" >> "$GITHUB_ENV"
+      - name: Check the live frames, and take the pictures
+        if: matrix.shard == 'census-built'
+        working-directory: ${{ runner.temp }}/lag-tools
+        run: |
+          mkdir -p "$LAG_OUT/shots"
+          node check-live.mjs | tee "$LAG_OUT/check-live.txt"
+          for size in 360,780 1280,800; do
+            npx playwright screenshot --viewport-size="$size" --wait-for-timeout=4000 "$LAG_BASE/" "$LAG_OUT/shots/after-${size%,*}.png"
+            npx playwright screenshot --viewport-size="$size" --wait-for-timeout=4000 "$LAG_BEFORE_BASE/" "$LAG_OUT/shots/before-${size%,*}.png"
+          done
       - name: Measure
         # This limit is lower than the limit of the job, so the summary and the upload still run.
         timeout-minutes: 78

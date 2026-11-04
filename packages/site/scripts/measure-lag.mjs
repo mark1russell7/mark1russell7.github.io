@@ -56,7 +56,12 @@ mkdirSync(OUT, { recursive: true });
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const round = (value, digits = 2) => (Number.isFinite(value) ? Number(value.toFixed(digits)) : null);
-const urlOf = (route) => (route === "pond" ? `${BASE}/` : `${BASE}/#${route}`);
+/** The arm "before" loads the build of main from a second server in the same job, so its pair is fair. */
+const BEFORE = (env.LAG_BEFORE_BASE ?? BASE).replace(/\/$/, "");
+const urlOf = (route, arm) => {
+  const base = arm === "before" ? BEFORE : BASE;
+  return route === "pond" ? `${base}/` : `${base}/#${route}`;
+};
 
 process.on("unhandledRejection", (error) => console.log(`unhandled rejection: ${String(error).slice(0, 200)}`));
 
@@ -406,6 +411,8 @@ function loadRecord(parts, requests, loadAt, windowEnd, m) {
       documents: [...requests.values()].filter((r) => r.type === "Document").length,
       requests: requests.size,
       headRequests: [...requests.values()].filter((r) => r.method === "HEAD").length,
+      posterRequests: [...requests.values()].filter((r) => r.url.includes("/posters/")).length,
+      posterBytes: sum((r) => r.url.includes("/posters/"), "encoded"),
       nodes: m.Nodes,
       frames: m.Frames,
       documentsLive: m.Documents,
@@ -478,7 +485,7 @@ async function sample(c, record) {
   const { browser, page, cdp, requests, errors } = session;
   try {
     enter("goto");
-    await page.goto(urlOf(c.route), { waitUntil: "load", timeout: GOTO_LIMIT_MS });
+    await page.goto(urlOf(c.route, arm), { waitUntil: "load", timeout: GOTO_LIMIT_MS });
     const loadAt = Date.now();
     enter("settle");
     await sleep(SETTLE_MS);
@@ -562,9 +569,7 @@ function gridCases() {
 function causeCases() {
   const out = [];
   for (const condition of CONDITIONS.filter((c) => c.rate === (c.width === 360 ? 4 : 1))) {
-    for (const arm of ["base", "aa", "noiframes", "nowebgl", "reduced", "nobackdrop"]) out.push({ route: "pond", arm, ...condition });
-    for (const arm of ["base", "noiframes"]) out.push({ route: "river", arm, ...condition });
-    for (const arm of ["base", "noiframes"]) out.push({ route: "board", arm, ...condition });
+    for (const arm of ["base", "aa", "before", "nobackdrop"]) out.push({ route: "pond", arm, ...condition });
   }
   return out;
 }
