@@ -38,11 +38,11 @@ The statuses are `done`, `in progress`, `next` and `later`.
 | ID | Item | Status | Depends on | PR |
 | --- | --- | --- | --- | --- |
 | P15 | The Pond shows a poster for each card, and a site starts only on request | done (2026-11-04) | P2 | #94 |
-| P16 | The Board and the River show posters in the same way | in progress | P15 | #96 |
-| P17 | Find the cause of the slow Pond rounds on a phone, and of the late poster paint, with a CPU trace in CI | next | P15 | |
+| P16 | The Board and the River show posters in the same way | done (2026-11-04) | P15 | #96 |
+| P17 | Find the cause of the slow Pond rounds on a phone, and of the late poster paint, with a CPU trace in CI | in progress | P15 | |
 
 The result of P15 has two modes on a phone at 360, four times slower than a normal CPU.
 The total blocking time was 9 ms in one run. In the next run its median was 86 ms, and 2 of 5 rounds were above 700 ms.
-P17 looks for the cause of those rounds. The earlier build of the Pond had a median of 2185 ms in the first run.
+P17 looks for the cause of those rounds. The trace of 12 rounds shows one task of 728 to 982 ms in each round. It starts just after the first paint, and the poster paints just after it ends. The task is `Water.create`, which waits for the first WebGL call. CI uses a software renderer, so a real GPU can have a different time. The earlier build of the Pond had a median of 2185 ms in the first run.
 
 The transparent rectangle that a visitor saw is not reproduced in a software renderer. No real GPU was tested, so it is not shown as fixed.
