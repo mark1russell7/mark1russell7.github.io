@@ -210,6 +210,14 @@ a {
   font-weight: 800;
 }
 
+.frame-poster img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .frame-poster span {
   padding: 0 6cqi 8cqi;
   font-size: 7.5cqi;

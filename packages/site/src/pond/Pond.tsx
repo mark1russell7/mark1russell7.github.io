@@ -300,6 +300,7 @@ export function Pond({ onOpen, reduced, paused }: ConceptProps): ReactElement {
                   width={box.w}
                   height={box.h}
                   scale={box.k}
+                  onDemand
                   onOpen={onOpen}
                   className="floating"
                   style={{ transform: `translate3d(${box.x - box.w / 2}px, ${box.y - box.h / 2}px, 0)`, opacity: reduced ? 1 : 0 }}

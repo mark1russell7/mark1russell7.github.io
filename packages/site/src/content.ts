@@ -41,6 +41,10 @@ export interface Pebble {
 
 export type Item = Site | Tile | Pebble;
 
+/** The size of the viewport in the frame of a site, before the frame scales it. */
+export const FRAME_WIDTH = 1280;
+export const FRAME_HEIGHT = 800;
+
 const github = "https://github.com/mark1russell7";
 
 /** A public repository with a GitHub Pages site, as `scripts/discover.ts` found it. */
@@ -486,6 +490,30 @@ export const curated: readonly Site[] = [
     tier: 2,
     focus: "#lab",
     repo: `${github}/TinyImages`,
+  },
+  {
+    kind: "site",
+    id: "meds",
+    name: "Meds",
+    path: "/Meds/",
+    tagline: "A phone app for the next dose, live in your browser",
+    blurb: "The real Meds app runs in a phone frame, with invented sample items. Hold a tile, drag the hour wheel and move the clock. The page then shows how the state machine and the schedule code answer. Everything stays in your browser.",
+    hue: "#7FD1AE",
+    tier: 2,
+    focus: "#try",
+    repo: `${github}/Meds`,
+  },
+  {
+    kind: "site",
+    id: "collections",
+    name: "collections",
+    path: "/collections/",
+    tagline: "TypeScript collections with no dependencies",
+    blurb: "Pure collections for TypeScript, with no dependencies: lists, maps, queues, a summary tree, channels, lazy operations and dependency graphs. One package holds them all.",
+    hue: "#B79CED",
+    tier: 2,
+    focus: "main",
+    repo: `${github}/collections`,
   },
 ];
 
