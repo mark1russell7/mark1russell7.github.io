@@ -195,9 +195,15 @@ const browser = await chromium.launch();
   check("a click on the board gives its site one frame", (await frames(page)) === 1 && (await focused.count()) === 1, await frames(page));
   await page.screenshot({ path: join(OUT, "board-1280-focused.png") });
   const other = await page.evaluate((id) => {
-    const seen = [...document.querySelectorAll(".board a[data-id]")].filter((card) => card.dataset.id !== id).map((card) => card.getBoundingClientRect());
-    const rect = seen.find((one) => one.x + one.width / 2 > 10 && one.x + one.width / 2 < innerWidth - 10 && one.y + one.height / 2 > 70 && one.y + one.height / 2 < innerHeight - 10);
-    return rect ? { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 } : null;
+    const parts = [...document.querySelectorAll(".board a[data-id]")]
+      .filter((card) => card.dataset.id !== id)
+      .map((card) => {
+        const rect = card.getBoundingClientRect();
+        const [left, top, right, bottom] = [Math.max(rect.left, 0), Math.max(rect.top, 70), Math.min(rect.right, innerWidth), Math.min(rect.bottom, innerHeight)];
+        return { x: (left + right) / 2, y: (top + bottom) / 2, area: right > left + 12 && bottom > top + 12 ? (right - left) * (bottom - top) : 0 };
+      })
+      .sort((a, b) => b.area - a.area);
+    return parts[0]?.area > 0 ? parts[0] : null;
   }, box.id);
   if (other) {
     await page.mouse.move(other.x, other.y);
@@ -212,7 +218,8 @@ const browser = await chromium.launch();
   const child = await focused.elementHandle().then((element) => element.contentFrame());
   await child.waitForLoadState("load");
   await sleep(500);
-  await child.evaluate(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })));
+  // The key removes the frame that runs this call, so a detached frame is a possible answer. The check below decides.
+  await child.evaluate(() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }))).catch((error) => console.log(`the key call ended with: ${error.message}`));
   await sleep(1500);
   check("Esc in the loaded site leaves it and unloads the frame", (await page.locator(".board-card.is-focused").count()) === 0 && (await frames(page)) === 0, await frames(page));
   await context.close();
