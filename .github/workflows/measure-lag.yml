@@ -51,7 +51,7 @@ jobs:
           cd "$RUNNER_TEMP/lag-tools"
           npm init -y > /dev/null
           npm pkg set type=module
-          npm install --no-audit --no-fund playwright@1.64.1 @mark1russell7/rigor-statistics@0.1.6 @jridgewell/trace-mapping@0.3.31
+          npm install --no-audit --no-fund sharp@0.35.5 playwright@1.64.1 @mark1russell7/rigor-statistics@0.1.6 @jridgewell/trace-mapping@0.3.31
           npx playwright install --with-deps chromium
       # The built site has source maps, so a CPU profile gives a file and a line. The preview server sends the project paths to the live site.
       - name: Build the site and start the preview server

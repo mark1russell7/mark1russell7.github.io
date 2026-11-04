@@ -58,7 +58,7 @@ for (const width of [360, 1280]) {
 }
 
 // The sites with a phone table
-for (const path of ["/lag-hud/", "/docker-sqlite/", "/cue/"]) {
+for (const path of ["/lag-hud/", "/docker-sqlite/", "/cue/", "/layout-contract/"]) {
   const { page, errors, close } = await open(path, 360);
   console.log(path, JSON.stringify(await shape(page)), errors);
   await page.screenshot({ path: join(out, `${path.replaceAll("/", "")}-360.png`), fullPage: true });
@@ -86,7 +86,7 @@ for (const path of ["/lag-hud/", "/docker-sqlite/", "/cue/"]) {
 }
 
 // The sites that took the shared shell: the build line, the width and the errors
-for (const path of ["/concat-src/", "/docker-mongo/", "/docker-sqlite/", "/pr-opener/", "/optional/"]) {
+for (const path of ["/ts-base/", "/grafana-infra/", "/otel-ts/", "/Funk/", "/highways/", "/layout-contract/", "/optional/"]) {
   for (const width of [360, 1280]) {
     const { page, errors, close } = await open(path, width);
     const { pageWide, view, build } = await shape(page);
