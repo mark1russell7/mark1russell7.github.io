@@ -77,12 +77,14 @@ void main() {
 /** The water draws the dye of the fluid on a canvas with WebGL, with a soft highlight and slow caustics. */
 export class Water {
   private readonly gl: WebGLRenderingContext;
+  private readonly fluid: Fluid;
   private readonly texture: WebGLTexture;
   private readonly bytes: Uint8Array;
   private readonly uniforms: { texel: WebGLUniformLocation | null; res: WebGLUniformLocation | null; time: WebGLUniformLocation | null };
 
-  private constructor(gl: WebGLRenderingContext, program: WebGLProgram, private readonly fluid: Fluid) {
+  private constructor(gl: WebGLRenderingContext, program: WebGLProgram, fluid: Fluid) {
     this.gl = gl;
+    this.fluid = fluid;
     const buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
