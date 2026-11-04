@@ -73,6 +73,9 @@ jobs:
           git fetch --depth=1 origin main
           git worktree add "$RUNNER_TEMP/before" FETCH_HEAD
           cp packages/site/src/discovered.json "$RUNNER_TEMP/before/packages/site/src/discovered.json"
+          # The arm "before" has the same posters. Without them it starts live frames, and the pair is not fair.
+          cp packages/site/src/posters.json "$RUNNER_TEMP/before/packages/site/src/posters.json"
+          cp -r packages/site/public/posters "$RUNNER_TEMP/before/packages/site/public/posters"
           ( cd "$RUNNER_TEMP/before" && pnpm install --frozen-lockfile && pnpm --filter @portfolio/site exec vite build --sourcemap )
           ( cd "$RUNNER_TEMP/before" && nohup pnpm --filter @portfolio/site exec vite preview --port 4174 --strictPort > preview-before.log 2>&1 & )
           nohup pnpm --filter @portfolio/site exec vite preview --port 4173 --strictPort > preview.log 2>&1 &

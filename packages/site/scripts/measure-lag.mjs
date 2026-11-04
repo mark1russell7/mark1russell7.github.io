@@ -445,6 +445,7 @@ function loadRecord(parts, requests, loadAt, windowEnd, m) {
   const fcp = top?.paint.find((p) => p.name === "first-contentful-paint")?.at ?? null;
   const fcpAt = (top?.origin ?? loadAt) + (fcp ?? 0);
   const inWindow = longtasks.filter((e) => e.at >= fcpAt && e.at <= windowEnd);
+  const blocking = longtasks.filter((e) => e.at + e.dur >= fcpAt && e.at <= windowEnd);
   const lcp = top?.lcp.at(-1);
   const shifts = (top?.cls ?? []).filter((s) => !s.input);
   const isMain = (r) => r.frame === [...requests.values()][0]?.frame;
@@ -480,6 +481,9 @@ function loadRecord(parts, requests, loadAt, windowEnd, m) {
       tbt: round(inWindow.reduce((a, e) => a + Math.max(0, e.dur - 50), 0), 0),
       longtasks: inWindow.length,
       longest: round(Math.max(0, ...inWindow.map((e) => e.dur)), 0),
+      // A task that starts before FCP and ends after it blocks the page too. These two values do not drop it.
+      tbtAll: round(blocking.reduce((a, e) => a + Math.max(0, e.dur - 50), 0), 0),
+      longestAll: round(Math.max(0, ...blocking.map((e) => e.dur)), 0),
       jsEncodedMain: sum((r) => isMain(r) && kind(r, "Script"), "encoded"),
       jsDecodedMain: sum((r) => isMain(r) && kind(r, "Script"), "decoded"),
       cssEncodedMain: sum((r) => isMain(r) && kind(r, "Stylesheet"), "encoded"),
@@ -1019,7 +1023,7 @@ async function runProbe() {
   }
 }
 
-const LOAD_COLUMNS = ["fcp", "lcp", "tbt", "cls", "longtasks", "longest", "jsEncodedMain", "cssEncodedMain", "jsEncodedFrames", "documents", "headRequests", "nodes", "frames"];
+const LOAD_COLUMNS = ["fcp", "lcp", "tbt", "tbtAll", "cls", "longtasks", "longest", "longestAll", "jsEncodedMain", "cssEncodedMain", "jsEncodedFrames", "documents", "headRequests", "nodes", "frames"];
 const PHASE_COLUMNS = ["fps", "p50", "p95", "p99", "over33", "over33Pct", "longtasks", "longtaskMs", "loaf", "loafBlockingMs", "busyPct", "scriptPct", "layoutPct", "stylePct"];
 
 function spread(values) {
