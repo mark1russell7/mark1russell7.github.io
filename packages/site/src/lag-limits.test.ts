@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONTROL_MS, type LagRound, type LagValues, LAST_ROUNDS, LIMITS, blockingOf, controlHolds, judgeLag, lagMore, lagPasses, lagUndecided } from "./lag-limits.ts";
+import { CONTROL_MS, type LagRound, type LagValues, LAST_ROUNDS, LIMITS, blockingOf, controlHolds, judgeLag, lagMore, lagPasses, lagStamp, lagUndecided, lagUndecidedLines } from "./lag-limits.ts";
 
 const HEALTHY: LagValues = { tbtAll: 220, longestAll: 240, frames: 1, nodes: 570, lcp: 900 };
 
@@ -75,6 +75,25 @@ describe("judgeLag", () => {
   it("has no limit on the largest paint", () => {
     expect(Object.keys(LIMITS)).not.toContain("lcp");
     expect(lagPasses(judgeLag(roundsOf("pond", { lcp: 60000 })))).toBe(true);
+  });
+});
+
+describe("lagStamp", () => {
+  it("names the budget, the looks and the undecided count", () => {
+    const rounds = roundsOf("pond", {}, {}, LAST_ROUNDS);
+    expect(lagStamp(judgeLag(rounds))).toEqual({ budget: 24, looks: [6, 12, 24], undecided: 0 });
+  });
+});
+
+describe("lagUndecidedLines", () => {
+  it("gives no line with no pair", () => {
+    expect(lagUndecidedLines([])).toEqual([]);
+  });
+
+  it("says in plain words that the run passes and proves nothing for the pair", () => {
+    const lines = lagUndecidedLines([{ measure: "tbtAll", route: "pond", reason: "The interval holds the limit." }]);
+    expect(lines[0]).toBe("Cannot decide: 1. After 24 rounds, the interval of each pair below still holds its limit. The run passes, but it does not prove these limits.");
+    expect(lines.at(-1)).toBe("- tbtAll of pond: The interval holds the limit.");
   });
 });
 

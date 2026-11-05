@@ -7,7 +7,7 @@ import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { firstArm } from "@mark1russell7/rigor-bench";
 import { chromium } from "playwright";
-import { CONTROL_MS, FIRST_ROUNDS, LAST_ROUNDS, LIMITS, type LagRound, type LagTask, type LagValues, ROUTES, blockingOf, controlHolds, judgeLag, lagMore, lagPasses, lagUndecided } from "../src/lag-limits.ts";
+import { CONTROL_MS, FIRST_ROUNDS, LAST_ROUNDS, LIMITS, type LagRound, type LagTask, type LagValues, ROUTES, blockingOf, controlHolds, judgeLag, lagMore, lagPasses, lagStamp, lagUndecided, lagUndecidedLines } from "../src/lag-limits.ts";
 
 const BASE = (process.env["LAG_BASE"] ?? "http://localhost:4173").replace(/\/$/, "");
 const OUT = process.env["LAG_OUT"] ?? "lag-budget";
@@ -119,11 +119,12 @@ for (let more = lagMore(judgeLag(rounds)); more.size > 0; more = lagMore(judgeLa
 const control = await load(ROUTES[0], true);
 const verdicts = judgeLag(rounds);
 const undecided = lagUndecided(verdicts);
+const stamp = lagStamp(verdicts);
 const seesTask = controlHolds(control);
 const passed = seesTask && lagPasses(verdicts);
 
 mkdirSync(OUT, { recursive: true });
-writeFileSync(join(OUT, "lag-budget.json"), `${JSON.stringify({ limits: LIMITS, rounds, control, verdicts, undecided, passed }, null, 2)}\n`);
+writeFileSync(join(OUT, "lag-budget.json"), `${JSON.stringify({ stamp, limits: LIMITS, rounds, control, verdicts, undecided, passed }, null, 2)}\n`);
 
 const text = [
   `### Lag limits: ${passed ? "passed" : "failed"}`,
@@ -138,8 +139,9 @@ const text = [
   "",
   `The control round has a task of ${CONTROL_MS} ms. The measure read ${control.longestAll} ms, so the control ${seesTask ? "holds" : "does not hold"}.`,
   "",
-  ...(undecided.length > 0 ? [`Undecided: ${undecided.length}. These limits are not proved in this run.`, ""] : []),
-  ...undecided.map((u) => `- ${u.measure}: ${u.reason}`),
+  `The budget is ${stamp.budget} rounds of each arm, with looks at ${stamp.looks.join(", ")}. Undecided: ${stamp.undecided}.`,
+  "",
+  ...lagUndecidedLines(undecided),
   ...verdicts.filter((v) => v.verdict.fails).map((v) => `- ${v.measure}: ${v.verdict.reason}`),
 ].join("\n");
 console.log(text);

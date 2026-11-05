@@ -117,6 +117,34 @@ export function lagUndecided(verdicts: readonly LagVerdict[]): LagUndecided[] {
   return verdicts.flatMap(({ measure, verdict }) => verdict.cases.filter((c) => c.outcome === "cannot decide").map((c) => ({ measure, route: c.case, reason: c.reason })));
 }
 
+/** The stamp of a run: what the run spent and what it did not prove. */
+export interface LagStamp {
+  /** The most rounds of each arm of a route. */
+  readonly budget: number;
+  /** The rounds of each arm at each look. */
+  readonly looks: readonly number[];
+  /** The count of pairs of a measure and a route with no outcome. */
+  readonly undecided: number;
+}
+
+/** This function gives the stamp of a run. */
+export function lagStamp(verdicts: readonly LagVerdict[]): LagStamp {
+  return { budget: LAST_ROUNDS, looks: BUDGET_LOOKS.map((look) => look.rounds), undecided: lagUndecided(verdicts).length };
+}
+
+/**
+ * This function gives the plain words for each pair with no outcome. The pair passes, and its limit stays not proved, so
+ * the words say both.
+ */
+export function lagUndecidedLines(undecided: readonly LagUndecided[]): string[] {
+  if (undecided.length === 0) return [];
+  return [
+    `Cannot decide: ${undecided.length}. After ${LAST_ROUNDS} rounds, the interval of each pair below still holds its limit. The run passes, but it does not prove these limits.`,
+    "",
+    ...undecided.map((u) => `- ${u.measure} of ${u.route}: ${u.reason}`),
+  ];
+}
+
 /** This function gives true when the measure saw the task of the control round, so the run can fail. */
 export function controlHolds(control: Pick<LagValues, "tbtAll" | "longestAll">): boolean {
   return control.longestAll >= CONTROL_MS && control.tbtAll >= CONTROL_MS - BLOCKING_AFTER_MS;
