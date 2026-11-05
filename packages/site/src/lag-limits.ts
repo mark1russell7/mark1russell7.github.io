@@ -8,10 +8,10 @@ import { BUDGET_LOOKS, type BudgetLooksVerdict, type BudgetRound, budgetLooksVer
 export const ROUTES = ["pond", "river", "board"] as const;
 
 /** The first rounds of each arm of each route. */
-export const FIRST_ROUNDS = BUDGET_LOOKS[0]?.rounds ?? 6;
+export const FIRST_ROUNDS: number = BUDGET_LOOKS[0]?.rounds ?? 6;
 
 /** The budget: the most rounds of each arm of a route. The looks of `BUDGET_LOOKS` stop here. */
-export const LAST_ROUNDS = BUDGET_LOOKS.at(-1)?.rounds ?? 24;
+export const LAST_ROUNDS: number = BUDGET_LOOKS.at(-1)?.rounds ?? 24;
 
 /** The time of the task of the control round, in milliseconds. It is above each time limit. */
 export const CONTROL_MS = 800;
