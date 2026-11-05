@@ -7,7 +7,7 @@ import { appendFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { firstArm } from "@mark1russell7/rigor-bench";
 import { chromium } from "playwright";
-import { CONTROL_MS, LIMITS, type LagRound, type LagTask, type LagValues, ROUNDS, ROUTES, blockingOf, controlHolds, judgeLag, lagPasses } from "../src/lag-limits.ts";
+import { CONTROL_MS, FIRST_ROUNDS, LAST_ROUNDS, LIMITS, type LagRound, type LagTask, type LagValues, ROUTES, blockingOf, controlHolds, judgeLag, lagMore, lagPasses, lagStamp, lagUndecided, lagUndecidedLines } from "../src/lag-limits.ts";
 
 const BASE = (process.env["LAG_BASE"] ?? "http://localhost:4173").replace(/\/$/, "");
 const OUT = process.env["LAG_OUT"] ?? "lag-budget";
@@ -94,8 +94,13 @@ function row(measure: string, limit: number, outcome: string, cases: readonly { 
 await load(ROUTES[0]);
 
 const rounds: LagRound[] = [];
-for (const [index, route] of ROUTES.entries()) {
-  for (let round = 0; round < ROUNDS; round++) {
+/** The rounds of each route so far. */
+const counts = new Map<string, number>();
+
+/** This function loads a route in the two arms until each arm has `upTo` rounds. */
+async function addRounds(route: string, upTo: number): Promise<void> {
+  const index = (ROUTES as readonly string[]).indexOf(route);
+  for (let round = counts.get(route) ?? 0; round < upTo; round++) {
     const first = firstArm(round, index);
     for (const arm of first === "a" ? (["a", "b"] as const) : (["b", "a"] as const)) {
       const values = await load(route);
@@ -103,19 +108,30 @@ for (const [index, route] of ROUTES.entries()) {
       console.log(`${route} ${round} ${arm}: ${JSON.stringify(values)}`);
     }
   }
+  counts.set(route, upTo);
+}
+
+for (const route of ROUTES) await addRounds(route, FIRST_ROUNDS);
+// A route with no outcome gets the rounds of its next look. The looks stop at LAST_ROUNDS.
+for (let more = lagMore(judgeLag(rounds)); more.size > 0; more = lagMore(judgeLag(rounds))) {
+  for (const [route, upTo] of more) await addRounds(route, upTo);
 }
 const control = await load(ROUTES[0], true);
 const verdicts = judgeLag(rounds);
+const undecided = lagUndecided(verdicts);
+const stamp = lagStamp(verdicts);
 const seesTask = controlHolds(control);
 const passed = seesTask && lagPasses(verdicts);
 
 mkdirSync(OUT, { recursive: true });
-writeFileSync(join(OUT, "lag-budget.json"), `${JSON.stringify({ limits: LIMITS, rounds, control, verdicts, passed }, null, 2)}\n`);
+writeFileSync(join(OUT, "lag-budget.json"), `${JSON.stringify({ stamp, limits: LIMITS, rounds, control, verdicts, undecided, passed }, null, 2)}\n`);
 
 const text = [
   `### Lag limits: ${passed ? "passed" : "failed"}`,
   "",
-  `The median of ${ROUNDS} rounds in each arm, at ${VIEWPORT.width} px, with a CPU ${CPU_RATE} times slower. Only the outcome \`within\` passes.`,
+  `The rounds of each arm: ${ROUTES.map((route) => `${route} ${counts.get(route)}`).join(", ")}, with a budget of ${LAST_ROUNDS}. The view is ${VIEWPORT.width} px, with a CPU ${CPU_RATE} times slower.`,
+  "",
+  "A run fails only when an interval is above the limit. A case with no outcome at its last look passes as undecided.",
   "",
   "| Measure | Limit | Outcome | Medians |",
   "| --- | ---: | --- | --- |",
@@ -123,7 +139,10 @@ const text = [
   "",
   `The control round has a task of ${CONTROL_MS} ms. The measure read ${control.longestAll} ms, so the control ${seesTask ? "holds" : "does not hold"}.`,
   "",
-  ...verdicts.filter((v) => v.verdict.outcome !== "within").map((v) => `- ${v.measure}: ${v.verdict.reason}`),
+  `The budget is ${stamp.budget} rounds of each arm, with looks at ${stamp.looks.join(", ")}. Undecided: ${stamp.undecided}.`,
+  "",
+  ...lagUndecidedLines(undecided),
+  ...verdicts.filter((v) => v.verdict.fails).map((v) => `- ${v.measure}: ${v.verdict.reason}`),
 ].join("\n");
 console.log(text);
 if (process.env["GITHUB_STEP_SUMMARY"]) appendFileSync(process.env["GITHUB_STEP_SUMMARY"], `${text}\n`);
