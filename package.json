@@ -20,7 +20,7 @@
   "devDependencies": {
     "@mark1russell7/conventions": "^0.36.0",
     "@mark1russell7/cue": "^2.1.1",
-    "@mark1russell7/ste-lint": "^0.1.1",
+    "@mark1russell7/ste-lint": "^0.3.0",
     "@mark1russell7/template-cli": "^0.1.2",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
