@@ -42,7 +42,7 @@ The statuses are `done`, `in progress`, `next` and `later`.
 | P17 | Find the cause of the slow Pond rounds on a phone, and of the late poster paint, with a CPU trace in CI | done (2026-11-04) | P15 | #99 |
 | P18 | Remove the blur behind the tiles | done (2026-11-04) | P17 | #100 |
 | P19 | A limit on the lag of the site in CI | done (2026-11-04) | P18 | #101 |
-| P20 | Make `Lag limits OK` a merge gate | later | P19 | |
+| P20 | Make `Lag limits OK` a merge gate | done (2026-11-08) | P19 | |
 
 P15 appeared to have two modes on a phone at 360, four times slower than a normal CPU.
 The two modes were a fault of the measure, which dropped a task that started before the first paint.
@@ -87,5 +87,6 @@ Two gaps stay open in P19. The A/A differences of 1 for the frames and 500 for t
 The workflow does not stop a merge at this time. A route with no outcome gets more rounds at looks of 12 and 24, because one slow round gives `cannot decide` at 6.
 A run fails only when an interval is above the limit. A route with no outcome at 24 rounds passes, and the record names it as undecided.
 P20 makes it a merge gate after 8 runs on main with no false failure. The weekly run and each pull request of the site count.
+Since #106, the check measured in 23 of 23 runs, and each passed. On 2026-11-08 `Lag limits OK` became a necessary check of main.
 
 The transparent rectangle that a visitor saw is not reproduced in a software renderer. No real GPU was tested, so it is not shown as fixed.
