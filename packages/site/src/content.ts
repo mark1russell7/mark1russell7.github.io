@@ -241,6 +241,18 @@ export const curated: readonly Site[] = [
   },
   {
     kind: "site",
+    id: "strategy-space",
+    name: "strategy-space",
+    path: "/strategy-space/",
+    tagline: "Layout strategies as data",
+    blurb: "It writes a layout strategy as data: the stages of an engine, the options of each stage and the ranges of their params. A generator makes the configs of the space, so a new combination needs no new code.",
+    hue: "#9B8CF2",
+    tier: 2,
+    focus: ".lead",
+    repo: `${github}/strategy-space`,
+  },
+  {
+    kind: "site",
     id: "codeatlas",
     name: "codeatlas",
     path: "/codeatlas/",
