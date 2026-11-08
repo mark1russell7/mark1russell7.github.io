@@ -31,7 +31,7 @@ jobs:
       security-events: write
       actions: read
     steps:
-      - uses: mark1russell7/template/.github/actions/security-scan@c3c43390d490c66e92d1959d0829a1e0597fab30 # main
+      - uses: mark1russell7/template/.github/actions/security-scan@8f6358bbecd380c61abfd0faf53a6baca812db0d # main
 
   # The one check of this file that the ruleset of main names, next to CI OK (template CI.md, "The check of the
   # ruleset"). The scans stay out of ci.yml, because release.yml calls ci.yml with contents: read only.
