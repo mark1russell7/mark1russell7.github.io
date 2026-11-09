@@ -62,7 +62,7 @@ jobs:
     concurrency:
       group: pages-${{ github.event_name == 'pull_request' && github.ref || 'deploy' }}
       cancel-in-progress: false
-    uses: mark1russell7/template/.github/workflows/reusable-pages.yml@7fcc1036a4b10f7f8d35c7d08f161cd872b03243 # main
+    uses: mark1russell7/template/.github/workflows/reusable-pages.yml@e8ddfd74e9ddfb92a1feba57b265fa9ef62d672e # main
     # The build job of the shared workflow gets only the read permissions. Only its deploy job,
     # which runs no code of the repository, writes to Pages.
     permissions:
