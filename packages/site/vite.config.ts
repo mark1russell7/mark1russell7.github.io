@@ -1,4 +1,5 @@
 import react from "@vitejs/plugin-react";
+import { escapeAttribute as escape } from "@mark1russell7/text";
 import { defineConfig, type Plugin, type ProxyOptions, type UserConfig } from "vite";
 import { bio, links, pebbles, sites } from "./src/content.ts";
 import posterIds from "./src/posters.json" with { type: "json" };
@@ -9,10 +10,6 @@ const origin = "https://mark1russell7.github.io";
 // On GitHub Pages, the project sites are on the same origin as this site. In development, the proxy gives the same result,
 // so the pool can read the documents in its frames.
 const proxy: Record<string, ProxyOptions> = Object.fromEntries(sites.map((site) => [site.path, { target: origin, changeOrigin: true, secure: true }]));
-
-function escape(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
 
 function jsonLd(data: unknown): string {
   return `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, "\\u003c")}</script>`;
