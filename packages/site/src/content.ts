@@ -599,6 +599,18 @@ export const curated: readonly Site[] = [
     focus: ".lead",
     repo: `${github}/room-view`,
   },
+  {
+    kind: "site",
+    id: "pairrank",
+    name: "pairrank",
+    path: "/pairrank/",
+    tagline: "Pick the better of two, then rank",
+    blurb: "Tag websites, pick the better of two, and rank them by ratings in a local database. The site runs the duel on eight sample sites. It ranks them by Bradley-Terry, Elo or Glicko-2, and it compares the ranking with a hidden taste.",
+    hue: "#F5A3C7",
+    tier: 2,
+    focus: "#duel",
+    repo: `${github}/pairrank`,
+  },
 ];
 
 /**
