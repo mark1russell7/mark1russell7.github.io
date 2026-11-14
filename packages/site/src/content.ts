@@ -647,6 +647,18 @@ export const curated: readonly Site[] = [
     focus: ".lead",
     repo: `${github}/wirelab`,
   },
+  {
+    kind: "site",
+    id: "alerts",
+    name: "alerts",
+    path: "/alerts/",
+    tagline: "One stream of alerts from many sources",
+    blurb: "It makes one stream of alerts from many sources: weather, news, service status and more. An adapter for each source maps its feed to one event format, based on the Common Alerting Protocol. Duplicate reports merge into one incident in any order. A calculation sets the priority of each incident. Each alert goes to its channels, with acknowledgement and escalation. The core and the first sources are in progress.",
+    hue: "#E4572E",
+    tier: 2,
+    focus: ".lead",
+    repo: `${github}/alerts`,
+  },
 ];
 
 /**
