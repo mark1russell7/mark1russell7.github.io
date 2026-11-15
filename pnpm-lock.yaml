@@ -204,8 +204,8 @@ importers:
         specifier: ^0.2.12
         version: 0.2.38(esbuild@0.28.2)
       '@mark1russell7/text':
-        specifier: ^0.0.5
-        version: 0.0.5
+        specifier: ^0.0.6
+        version: 0.0.6
       '@types/node':
         specifier: ^26.6.4
         version: 26.6.6
@@ -636,6 +636,10 @@ packages:
 
   '@mark1russell7/text@0.0.5':
     resolution: {integrity: sha512-Ql1eBET3PgEBL5DWZHZ20GRZmorkq6mWdnfj21cqXfLvZdikO+GlvSAfbv1ld7YCnEqxOa7eg6ESfl+jzPGe9w==}
+    engines: {node: '>=22.12'}
+
+  '@mark1russell7/text@0.0.6':
+    resolution: {integrity: sha512-IwKQHx9U+k5AbEzZ8q4CxImQCuYXSFhvzMOSgy5UGYrZRIBO9RES7SYrXDrKqQFtMl5qD2QbibffevUPsrUW+A==}
     engines: {node: '>=22.12'}
 
   '@oxc-project/types@0.156.0':
@@ -1579,6 +1583,8 @@ snapshots:
       '@clack/prompts': 1.8.1
 
   '@mark1russell7/text@0.0.5': {}
+
+  '@mark1russell7/text@0.0.6': {}
 
   '@oxc-project/types@0.156.0': {}
 
