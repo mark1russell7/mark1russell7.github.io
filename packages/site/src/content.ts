@@ -671,6 +671,18 @@ export const curated: readonly Site[] = [
     focus: ".lead",
     repo: `${github}/geo`,
   },
+  {
+    kind: "site",
+    id: "netdiag",
+    name: "netdiag",
+    path: "/netdiag/",
+    tagline: "The cause of a network problem, layer by layer",
+    blurb: "It finds the cause of a network problem at each layer, from the link and Wi-Fi up to DNS, TLS and HTTP. Probes collect typed facts. A catalog of faults gives the probability of each cause, and the tool picks the next probe that gives the most information. Network labs inject each fault on purpose, and a gate in CI holds the hit rate. The model of facts and the catalog of faults are written. The probes are in progress.",
+    hue: "#3DBFA0",
+    tier: 2,
+    focus: ".lead",
+    repo: `${github}/netdiag`,
+  },
 ];
 
 /**
