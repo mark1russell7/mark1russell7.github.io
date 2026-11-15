@@ -647,6 +647,30 @@ export const curated: readonly Site[] = [
     focus: ".lead",
     repo: `${github}/wirelab`,
   },
+  {
+    kind: "site",
+    id: "alerts",
+    name: "alerts",
+    path: "/alerts/",
+    tagline: "One stream of alerts from many sources",
+    blurb: "It makes one stream of alerts from many sources: weather, news, service status and more. An adapter for each source maps its feed to one event format, based on the Common Alerting Protocol. Duplicate reports merge into one incident in any order. A calculation sets the priority of each incident. Each alert goes to its channels, with acknowledgement and escalation. The core and the first sources are in progress.",
+    hue: "#E4572E",
+    tier: 2,
+    focus: ".lead",
+    repo: `${github}/alerts`,
+  },
+  {
+    kind: "site",
+    id: "geo",
+    name: "geo",
+    path: "/geo/",
+    tagline: "Points on the Earth, as plain functions",
+    blurb: "It gives plain functions for points on the Earth, with no dependencies. They give the great-circle distance and the bearing between two points, and the destination from a point. They test a point in a polygon and the overlap of two polygons, and they make buffers and bounding boxes. Geohash and GeoJSON are in it too. Each point is a WGS84 latitude and longitude. The first package is in progress.",
+    hue: "#2E86AB",
+    tier: 2,
+    focus: ".lead",
+    repo: `${github}/geo`,
+  },
 ];
 
 /**
