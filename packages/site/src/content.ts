@@ -659,6 +659,18 @@ export const curated: readonly Site[] = [
     focus: ".lead",
     repo: `${github}/alerts`,
   },
+  {
+    kind: "site",
+    id: "geo",
+    name: "geo",
+    path: "/geo/",
+    tagline: "Points on the Earth, as plain functions",
+    blurb: "It gives plain functions for points on the Earth, with no dependencies. They give the great-circle distance and the bearing between two points, and the destination from a point. They test a point in a polygon and the overlap of two polygons, and they make buffers and bounding boxes. Geohash and GeoJSON are in it too. Each point is a WGS84 latitude and longitude. The first package is in progress.",
+    hue: "#2E86AB",
+    tier: 2,
+    focus: ".lead",
+    repo: `${github}/geo`,
+  },
 ];
 
 /**
