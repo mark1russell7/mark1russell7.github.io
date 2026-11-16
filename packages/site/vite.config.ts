@@ -2,6 +2,7 @@ import react from "@vitejs/plugin-react";
 import { escapeAttribute as escape } from "@mark1russell7/text";
 import { defineConfig, type Plugin, type ProxyOptions, type UserConfig } from "vite";
 import { bio, links, pebbles, sites } from "./src/content.ts";
+import { addressOf, moveOf, movePage, moves, notFoundPage } from "./src/moves.ts";
 import posterIds from "./src/posters.json" with { type: "json" };
 
 const origin = "https://mark1russell7.github.io";
@@ -9,7 +10,14 @@ const origin = "https://mark1russell7.github.io";
 // A user site (<user>.github.io) is served from the domain root, so the default base "/" is right.
 // On GitHub Pages, the project sites are on the same origin as this site. In development, the proxy gives the same result,
 // so the pool can read the documents in its frames.
-const proxy: Record<string, ProxyOptions> = Object.fromEntries(sites.map((site) => [site.path, { target: origin, changeOrigin: true, secure: true }]));
+const proxy: Record<string, ProxyOptions> = Object.fromEntries(
+  sites.filter((site) => !moveOf(site.path)).map((site) => [site.path, { target: origin, changeOrigin: true, secure: true }]),
+);
+
+/** This function gives the full address of a site: its new address when it moved, or its path on this domain. */
+function urlOf(path: string): string {
+  return new URL(addressOf(path), origin).href;
+}
 
 function jsonLd(data: unknown): string {
   return `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, "\\u003c")}</script>`;
@@ -56,7 +64,7 @@ function seo(): Plugin {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: "Projects of Mark Russell",
-    itemListElement: [...sites.map((site) => ({ ...site, url: `${origin}${site.path}` })), ...pebbles.map((pebble) => ({ ...pebble, url: pebble.href, repo: pebble.href }))].map(
+    itemListElement: [...sites.map((site) => ({ ...site, url: urlOf(site.path) })), ...pebbles.map((pebble) => ({ ...pebble, url: pebble.href, repo: pebble.href }))].map(
       (project, index) => ({
         "@type": "ListItem",
         position: index + 1,
@@ -78,7 +86,7 @@ function seo(): Plugin {
     `<p><strong>${escape(bio.lede)}</strong></p>`,
     ...bio.body.map((paragraph) => `<p>${escape(paragraph)}</p>`),
     `<h2>Projects</h2><ul>`,
-    ...sites.map((site) => `<li><a href="${site.path}">${escape(site.name)}</a>: ${escape(site.blurb)}</li>`),
+    ...sites.map((site) => `<li><a href="${escape(addressOf(site.path))}">${escape(site.name)}</a>: ${escape(site.blurb)}</li>`),
     `</ul><h2>Smaller repositories</h2><ul>`,
     ...pebbles.map((pebble) => `<li><a href="${pebble.href}">${escape(pebble.name)}</a>: ${escape(pebble.blurb)}</li>`),
     `</ul><p><a href="${links.linkedin}">LinkedIn</a>, <a href="${links.github}">GitHub</a> and <a href="${links.npm}">npm</a></p>`,
@@ -88,7 +96,8 @@ function seo(): Plugin {
     `<?xml version="1.0" encoding="UTF-8"?>`,
     `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
     `  <url><loc>${origin}/</loc><lastmod>${today}</lastmod></url>`,
-    ...sites.map((site) => `  <url><loc>${origin}${site.path}</loc></url>`),
+    // A moved site is not in the sitemap: its old path only sends the visitor to the new address.
+    ...sites.filter((site) => !moveOf(site.path)).map((site) => `  <url><loc>${origin}${site.path}</loc></url>`),
     `</urlset>`,
     ``,
   ].join("\n");
@@ -101,6 +110,20 @@ function seo(): Plugin {
     },
     generateBundle() {
       this.emitFile({ type: "asset", fileName: "sitemap.xml", source: sitemap });
+    },
+  };
+}
+
+/**
+ * This plugin writes a page at the old path of each moved site, and the `404.html` of the domain.
+ * GitHub Pages serves `404.html` for each missing path, so an old subpath of a moved site goes to its new address too.
+ */
+function moved(): Plugin {
+  return {
+    name: "portfolio-moved",
+    generateBundle() {
+      for (const move of moves) this.emitFile({ type: "asset", fileName: `${move.repo}/index.html`, source: movePage(move) });
+      this.emitFile({ type: "asset", fileName: "404.html", source: notFoundPage(moves) });
     },
   };
 }
@@ -122,7 +145,7 @@ function preloadPosters(): Plugin {
 }
 
 const config: UserConfig = defineConfig({
-  plugins: [react(), seo(), preloadPosters()],
+  plugins: [react(), seo(), preloadPosters(), moved()],
   server: { proxy },
   preview: { proxy },
 });

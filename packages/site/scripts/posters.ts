@@ -7,6 +7,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { type Browser, chromium } from "playwright";
 import sharp from "sharp";
 import { FRAME_HEIGHT, FRAME_WIDTH, type Site, sites } from "../src/content.ts";
+import { addressOf } from "../src/moves.ts";
 
 const ORIGIN = "https://mark1russell7.github.io";
 const WORKERS = 4;
@@ -24,7 +25,7 @@ async function capture(browser: Browser, site: Site): Promise<void> {
     colorScheme: "light",
   });
   try {
-    const response = await page.goto(`${ORIGIN}${site.path}`, { waitUntil: "load", timeout: LOAD_LIMIT_MS });
+    const response = await page.goto(new URL(addressOf(site.path), ORIGIN).href, { waitUntil: "load", timeout: LOAD_LIMIT_MS });
     if (!response?.ok()) throw new Error(`the server answered ${response?.status() ?? "nothing"}`);
     await page.waitForTimeout(SETTLE_MS);
     // The poster shows the same place in the site as the live frame, so the swap does not jump.

@@ -1,6 +1,7 @@
 import { type CSSProperties, type ReactElement, useEffect, useLayoutEffect, useRef } from "react";
 import type { Site } from "./content.ts";
 import { useHeldFrame } from "./live.ts";
+import { addressOf } from "./moves.ts";
 
 /** The place on the screen that the panel opens from and closes to. */
 export interface Origin {
@@ -85,7 +86,7 @@ export function Expanded(props: { site: Site; origin: () => Origin | null; onClo
           <span className="expanded-dot" />
           <strong>{site.name}</strong>
           <span className="expanded-blurb">{site.blurb}</span>
-          <a href={site.path} target="_blank" rel="noopener">
+          <a href={addressOf(site.path)} target="_blank" rel="noopener">
             Open in a new tab
           </a>
           <button ref={closeRef} type="button" onClick={close}>
@@ -93,7 +94,7 @@ export function Expanded(props: { site: Site; origin: () => Origin | null; onClo
           </button>
         </header>
         <iframe
-          src={site.path}
+          src={addressOf(site.path)}
           title={`The site of ${site.name}`}
           onLoad={(event) => {
             // Esc in the site closes the panel too. The site has the same origin, so the page can listen to its keys.
