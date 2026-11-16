@@ -1,6 +1,7 @@
 import { type CSSProperties, type ReactElement, useEffect, useRef, useState } from "react";
 import { bio, FRAME_HEIGHT, FRAME_WIDTH, type Item, links, type Pebble, proof, type Site, type Tile } from "./content.ts";
 import { useHeldFrame, useLive, useLiveCard } from "./live.ts";
+import { addressOf } from "./moves.ts";
 import { afterPaint, meter } from "./loop.ts";
 import posterIds from "./posters.json" with { type: "json" };
 
@@ -10,6 +11,7 @@ export const CAPTION_HEIGHT = 58;
 /**
  * This function moves the document in the frame to the element that `selector` finds.
  * The site and this page have the same origin, so the page can read the document of the frame.
+ * A site that moved to another owner has another origin. The page cannot read its document, and this function changes nothing.
  */
 function prepareFrame(frame: HTMLIFrameElement, selector: string | undefined): void {
   let tries = 0;
@@ -45,17 +47,18 @@ const siteStatus = new Map<string, Promise<boolean>>();
  */
 export function useSiteExists(site: Site): boolean | null {
   const [exists, setExists] = useState<boolean | null>(null);
+  const address = addressOf(site.path);
   useEffect(() => {
-    let status = siteStatus.get(site.path);
+    let status = siteStatus.get(address);
     if (!status) {
       // The question waits for the first paint. A card links to its site until the answer comes.
       status = new Promise<void>((resolve) => afterPaint(resolve))
-        .then(() => fetch(site.path, { method: "HEAD" }))
+        .then(() => fetch(address, { method: "HEAD" }))
         .then(
           (response) => response.ok,
           () => true,
         );
-      siteStatus.set(site.path, status);
+      siteStatus.set(address, status);
     }
     let live = true;
     void status.then((value) => {
@@ -64,7 +67,7 @@ export function useSiteExists(site: Site): boolean | null {
     return () => {
       live = false;
     };
-  }, [site.path]);
+  }, [address]);
   return exists;
 }
 
@@ -95,7 +98,7 @@ function LiveFrame(props: { site: Site; width: number; height: number; interacti
   return (
     <iframe
       ref={frameRef}
-      src={site.path}
+      src={addressOf(site.path)}
       title={`The site of ${site.name}`}
       tabIndex={interactive ? 0 : -1}
       aria-hidden={interactive ? undefined : true}
@@ -377,7 +380,7 @@ function SiteCard(props: Parameters<typeof PlateCard>[0] & { site: Site; classNa
   return (
     <a
       ref={cardRef}
-      href={missing ? site.repo : site.path}
+      href={missing ? site.repo : addressOf(site.path)}
       className={className}
       style={style}
       data-id={site.id}

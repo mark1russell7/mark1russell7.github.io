@@ -1,0 +1,110 @@
+import { escapeAttribute as escape } from "@mark1russell7/text";
+
+/**
+ * A repository that moved from this account to another owner. GitHub Pages serves its site at a new address.
+ * The old path on this domain sends each visitor to the same page at the new address.
+ */
+export interface Move {
+  /** The name of the repository. Its old site was at `/<repo>/` on this domain. */
+  readonly repo: string;
+  /** The new address of the site, with the slash at the end. */
+  readonly to: string;
+}
+
+/**
+ * The repositories that moved. The build writes a page at each old path and a `404.html` for the old subpaths.
+ * The card of a moved site shows the site from its new address.
+ */
+export const moves: readonly Move[] = [{ repo: "codeatlas", to: "https://metrograph-labs.github.io/codeatlas/" }];
+
+/**
+ * This function gives the move of a path on this domain, or undefined. The path `/<repo>` and each path under `/<repo>/` match.
+ * The match ignores the case of the letters, as GitHub Pages does for the name of a repository.
+ */
+export function moveOf(path: string, list: readonly Move[] = moves): Move | undefined {
+  const lower = path.toLowerCase();
+  return list.find((move) => {
+    const old = `/${move.repo.toLowerCase()}`;
+    return lower === old || lower.startsWith(`${old}/`);
+  });
+}
+
+/** This function gives the address to load for a path of this domain: the new address of a moved site, or the path. */
+export function addressOf(path: string, list: readonly Move[] = moves): string {
+  const move = moveOf(path, list);
+  return move ? move.to + path.slice(move.repo.length + 2) : path;
+}
+
+/**
+ * This function gives the script that sends the visitor of an old path to the new address.
+ * The script keeps the rest of the path, the query and the fragment. It has the same match as `moveOf`.
+ */
+export function redirectScript(list: readonly Move[]): string {
+  const data = JSON.stringify(list.map((move) => ({ old: `/${move.repo.toLowerCase()}`, to: move.to }))).replace(/</g, "\\u003c");
+  return [
+    `(() => {`,
+    `  const path = location.pathname;`,
+    `  const lower = path.toLowerCase();`,
+    `  for (const move of ${data}) {`,
+    `    if (lower === move.old || lower.startsWith(move.old + "/")) {`,
+    `      location.replace(move.to + path.slice(move.old.length + 1) + location.search + location.hash);`,
+    `      return;`,
+    `    }`,
+    `  }`,
+    `})();`,
+  ].join("\n");
+}
+
+const STYLE = [
+  `:root { color-scheme: light dark; font-family: system-ui, sans-serif; }`,
+  `body { margin: 0; min-height: 100vh; display: grid; place-items: center; }`,
+  `main { max-width: 36rem; padding: 2rem; line-height: 1.5; }`,
+].join("\n");
+
+function page(title: string, head: readonly string[], body: readonly string[]): string {
+  return [
+    `<!doctype html>`,
+    `<html lang="en">`,
+    `<head>`,
+    `<meta charset="utf-8">`,
+    `<meta name="viewport" content="width=device-width, initial-scale=1">`,
+    `<title>${escape(title)}</title>`,
+    ...head,
+    `<style>`,
+    STYLE,
+    `</style>`,
+    `</head>`,
+    `<body>`,
+    `<main>`,
+    ...body,
+    `</main>`,
+    `</body>`,
+    `</html>`,
+    ``,
+  ].join("\n");
+}
+
+/**
+ * This function gives the page at the old path of a moved site. Search engines read its canonical link and its refresh as a move.
+ * A browser with scripts goes to the same subpath, query and fragment. A browser with no scripts follows the refresh.
+ */
+export function movePage(move: Move): string {
+  const to = escape(move.to);
+  return page(
+    `${move.repo} moved`,
+    [`<link rel="canonical" href="${to}">`, `<script>\n${redirectScript([move])}\n</script>`, `<meta http-equiv="refresh" content="0; url=${to}">`],
+    [`<h1>${escape(move.repo)} moved</h1>`, `<p>The site of ${escape(move.repo)} is at <a href="${to}">${to}</a>.</p>`],
+  );
+}
+
+/**
+ * This function gives the `404.html` of the domain. GitHub Pages serves it for each path that no site has.
+ * A subpath of a moved site goes to its new address. Each other path shows a link to the home page.
+ */
+export function notFoundPage(list: readonly Move[]): string {
+  return page(
+    "Page not found",
+    [`<meta name="robots" content="noindex">`, `<script>\n${redirectScript(list)}\n</script>`],
+    [`<h1>Page not found</h1>`, `<p>This site has no page at this address. Go to <a href="/">the home page</a>.</p>`],
+  );
+}
