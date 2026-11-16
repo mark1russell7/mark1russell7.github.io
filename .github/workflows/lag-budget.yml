@@ -26,7 +26,7 @@ jobs:
       match: ${{ steps.changes.outputs.match }}
     steps:
       - id: changes
-        uses: mark1russell7/template/.github/actions/changes@eb7f3517aa8614e338a46acd37ab0c49395be5f9 # main
+        uses: mark1russell7/template/.github/actions/changes@f7e9a04c2e3965d20d1aea5a2e83e96ce8d23d16 # main
         with:
           paths: |
             .github/workflows/lag-budget.yml
@@ -86,6 +86,6 @@ jobs:
     timeout-minutes: 2
     permissions: {}
     steps:
-      - uses: mark1russell7/template/.github/actions/gate-summary@eb7f3517aa8614e338a46acd37ab0c49395be5f9 # main
+      - uses: mark1russell7/template/.github/actions/gate-summary@f7e9a04c2e3965d20d1aea5a2e83e96ce8d23d16 # main
         with:
           needs: ${{ toJSON(needs) }}
