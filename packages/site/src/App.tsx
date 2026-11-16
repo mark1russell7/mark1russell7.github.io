@@ -1,7 +1,7 @@
 import { type ReactElement, useCallback, useEffect, useState } from "react";
 import { Board } from "./board/Board.tsx";
 import { type ConceptId, type ConceptProps, concepts } from "./concept.ts";
-import { itemById, links, sites } from "./content.ts";
+import { firstView, itemById, items, links, picked, sites } from "./content.ts";
 import { Expanded, type Origin } from "./expand.tsx";
 import { useReducedMotion } from "./loop.ts";
 import { Pond } from "./pond/Pond.tsx";
@@ -33,12 +33,22 @@ function originOf(id: string): Origin | null {
   return { rect, radius };
 }
 
+/** True when the route opens a site that the first view does not show. Then the pool shows all the items. */
+function needsAll(route: Route): boolean {
+  return route.open !== null && !picked.includes(route.open);
+}
+
 export function App(): ReactElement {
   const [route, setRoute] = useState(readRoute);
+  const [all, setAll] = useState(() => needsAll(readRoute()));
   const reduced = useReducedMotion();
 
   useEffect(() => {
-    const change = (): void => setRoute(readRoute());
+    const change = (): void => {
+      const next = readRoute();
+      setRoute(next);
+      if (needsAll(next)) setAll(true);
+    };
     addEventListener("hashchange", change);
     return () => removeEventListener("hashchange", change);
   }, []);
@@ -81,7 +91,10 @@ export function App(): ReactElement {
         <p className="bar-note">{hint}</p>
       </header>
       <main className="stage">
-        <View key={route.concept} onOpen={open} reduced={reduced} paused={site !== undefined} />
+        <View key={`${route.concept}-${all ? "all" : "first"}`} items={all ? items : firstView} onOpen={open} reduced={reduced} paused={site !== undefined} />
+        <button type="button" className="pick" aria-pressed={all} onClick={() => setAll((now) => !now)}>
+          {all ? `Show ${picked.length} projects` : `Show all ${sites.length} projects`}
+        </button>
       </main>
       {site ? <Expanded key={site.id} site={site} origin={() => originOf(site.id)} onClosed={closed} reduced={reduced} /> : null}
     </div>

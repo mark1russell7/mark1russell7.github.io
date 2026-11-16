@@ -1,16 +1,10 @@
 import { type CSSProperties, type MouseEvent, type PointerEvent, type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { PlateCard } from "../cards.tsx";
 import type { ConceptProps } from "../concept.ts";
-import { itemById, items } from "../content.ts";
+import { itemById } from "../content.ts";
 import { PHONE_WIDTH } from "../layout.ts";
 import { useLoop, useSize } from "../loop.ts";
 import { desktopWorld, type Place, phoneWorld, type World } from "./places.ts";
-
-/** The board on a large screen. The places come from the items, so a new site gets a place without a change here. */
-const desktop: World = desktopWorld(items);
-
-/** The board on a phone: one column of cards. */
-const phone: World = phoneWorld(items);
 
 const MIN_ZOOM = 0.12;
 const MAX_ZOOM = 3;
@@ -37,13 +31,17 @@ function frame(x: number, y: number, w: number, h: number, width: number, height
  * When the user selects a site, the camera flies to it, and the site becomes interactive in place.
  * On a phone, the board is one column, and a site opens in a full-screen panel.
  */
-export function Board({ onOpen, reduced, paused }: ConceptProps): ReactElement {
+export function Board({ items, onOpen, reduced, paused }: ConceptProps): ReactElement {
+  // The board on a large screen. The places come from the items, so a new site gets a place without a change here.
+  const desktop: World = useMemo(() => desktopWorld(items), [items]);
+  // The board on a phone: one column of cards.
+  const phone: World = useMemo(() => phoneWorld(items), [items]);
   const rootRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<SVGRectElement>(null);
   const zoomRef = useRef<HTMLSpanElement>(null);
   const { width, height } = useSize(rootRef);
-  const world = useMemo(() => (width > 0 && width < PHONE_WIDTH ? phone : desktop), [width]);
+  const world = useMemo(() => (width > 0 && width < PHONE_WIDTH ? phone : desktop), [width, phone, desktop]);
   const camera = useRef<Camera>({ x: desktop.width / 2, y: desktop.height / 2, z: 0.4 });
   const target = useRef<Camera>({ ...camera.current });
   const velocity = useRef({ x: 0, y: 0 });

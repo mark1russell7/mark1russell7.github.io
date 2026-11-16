@@ -1,7 +1,6 @@
 import { type ReactElement, useEffect, useMemo, useRef } from "react";
 import { PlateCard } from "../cards.tsx";
 import type { ConceptProps } from "../concept.ts";
-import { items } from "../content.ts";
 import { random } from "../layout.ts";
 import { ease, useLoop, useSize } from "../loop.ts";
 import { type Floater, type Lane, riverPlan } from "./lanes.ts";
@@ -44,11 +43,11 @@ function flow(x: number, y: number, speed: number, rock: { x: number; y: number;
  * The river: the cards float to the left in three lanes. The pointer is a rock, and the current and the cards go around it.
  * The card under the pointer stops, and it is the rock.
  */
-export function River({ onOpen, reduced, paused }: ConceptProps): ReactElement {
+export function River({ items, onOpen, reduced, paused }: ConceptProps): ReactElement {
   const rootRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { width, height } = useSize(rootRef);
-  const layout = useMemo(() => (width > 0 ? riverPlan(items, width, height) : null), [width, height]);
+  const layout = useMemo(() => (width > 0 ? riverPlan(items, width, height) : null), [items, width, height]);
   const elements = useRef(new Map<string, HTMLElement>());
   const pointer = useRef({ x: 0, y: 0, inside: false, down: false });
   /** A drag moves the river. A drag of more than a few pixels is not a click on a card. */

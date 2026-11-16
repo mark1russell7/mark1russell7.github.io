@@ -1,5 +1,9 @@
+import type { Item } from "./content.ts";
+
 /** The props of each concept of the pool. */
 export interface ConceptProps {
+  /** The items that the concept shows: the first view, or all the items. */
+  readonly items: readonly Item[];
   /** The concept uses this function when the user opens a site card. */
   readonly onOpen: (id: string, element: HTMLElement) => void;
   /** True when the user asks for reduced motion. */

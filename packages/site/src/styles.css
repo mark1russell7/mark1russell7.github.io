@@ -131,6 +131,31 @@ a {
   min-height: 0;
 }
 
+/* The button that shows all the projects, or the first view again. */
+.pick {
+  position: absolute;
+  left: max(16px, env(safe-area-inset-left, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 16;
+  padding: 9px 18px;
+  border: 1px solid var(--foam);
+  border-radius: 999px;
+  background: var(--foam);
+  color: var(--abyss);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 640;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.8);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.pick[aria-pressed="true"] {
+  background: var(--abyss);
+  color: var(--foam);
+}
+
 .concept {
   position: absolute;
   inset: 0;

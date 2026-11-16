@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { desktopWorld, phoneWorld } from "./board/places.ts";
-import { curated, type Discovered, type Item, items, mergeSites, pebbles, sites, tiles } from "./content.ts";
+import { curated, type Discovered, firstView, type Item, items, mergeSites, pebbles, sites, tiles } from "./content.ts";
 import discovered from "./discovered.json" with { type: "json" };
 import { columnOrder, plateSize, relax, rowSizes } from "./layout.ts";
 import { MIN_SCALE, pondDesktop, pondPhone } from "./pond/homes.ts";
@@ -17,6 +17,7 @@ const longer: readonly Item[] = [...mergeSites(curated, [...discovered, ...extra
 const lists: readonly (readonly [string, readonly Item[]])[] = [
   ["today's items", items],
   ["two more found sites", longer],
+  ["the first view", firstView],
 ];
 
 /** The desktop sizes and the phone size of the stage, in CSS pixels. */

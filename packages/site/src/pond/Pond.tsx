@@ -1,7 +1,7 @@
 import { type ReactElement, useEffect, useMemo, useRef } from "react";
 import { PlateCard } from "../cards.tsx";
 import type { ConceptProps } from "../concept.ts";
-import { hueRgb, items } from "../content.ts";
+import { hueRgb } from "../content.ts";
 import { PHONE_WIDTH, random } from "../layout.ts";
 import { afterPaint, ease, useLoop, useSize } from "../loop.ts";
 import { Fluid } from "./fluid.ts";
@@ -29,12 +29,12 @@ interface Body extends Placed {
 /** A card starts at this opacity, so the poster shows in the first paint of the pool. The rest of the fade is the entrance of the card. */
 const FADE_START = 0.35;
 
-export function Pond({ onOpen, reduced, paused }: ConceptProps): ReactElement {
+export function Pond({ items, onOpen, reduced, paused }: ConceptProps): ReactElement {
   const rootRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { width, height } = useSize(rootRef);
-  const plan = useMemo(() => (width === 0 ? null : width < PHONE_WIDTH ? pondPhone(items, width) : pondDesktop(items, width, height)), [width, height]);
+  const plan = useMemo(() => (width === 0 ? null : width < PHONE_WIDTH ? pondPhone(items, width) : pondDesktop(items, width, height)), [items, width, height]);
   // A pond with more cards than one screen holds is taller than the screen, and it scrolls. This is true on a phone and on a large screen.
   const scrolls = plan !== null && plan.height > height + 0.5;
   const elements = useRef(new Map<string, HTMLElement>());
