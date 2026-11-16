@@ -737,6 +737,18 @@ export const pebbles: readonly Pebble[] = [];
 
 export const items: readonly Item[] = [...sites, ...tiles, ...pebbles];
 
+/** The identifiers of the projects of the first view, in their order. The button "Show all" adds the other projects. */
+export const picked: readonly string[] = ["systems", "lag", "async-browser-context", "vex", "coeval", "packing", "highways", "netdiag"];
+
+/** This function gives the items of the first view: the picked sites in the order of `ids`, then the tiles. */
+export function pickedItems(ids: readonly string[], all: readonly Site[] = sites): Item[] {
+  const chosen = ids.map((id) => all.find((site) => site.id === id)).filter((site): site is Site => site !== undefined);
+  return [...chosen, ...tiles];
+}
+
+/** The items of the first view. */
+export const firstView: readonly Item[] = pickedItems(picked);
+
 /** The numbers of the proof tile. Each number comes from a project site. */
 export const proof: readonly { readonly value: string; readonly label: string }[] = [
   { value: "98%", label: "mutation score of async-browser-context" },
@@ -749,7 +761,7 @@ export const proof: readonly { readonly value: string; readonly label: string }[
 export const bio: { readonly lede: string; readonly body: readonly string[] } = {
   lede: "I build reliability tooling and infrastructure for AI agents.",
   body: [
-    "I am a software engineer on the platform team at Tulip. Before that, I was its Tier 3 support engineer.",
+    "I am a software engineer on the platform team at Tulip. Before that, I led incident management.",
     "The projects here measure TCP failure detection and browser lag, and give Claude tools with clear limits.",
   ],
 };
