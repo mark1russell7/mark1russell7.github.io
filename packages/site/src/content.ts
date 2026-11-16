@@ -683,6 +683,18 @@ export const curated: readonly Site[] = [
     focus: ".lead",
     repo: `${github}/netdiag`,
   },
+  {
+    kind: "site",
+    id: "visuals",
+    name: "visuals",
+    path: "/visuals/",
+    tagline: "Viewers for 3D scenes, plans, maps and globes",
+    blurb: "It shows records in the browser as 3D scenes, plans, maps and globes. Each viewer has picking, themes and fallbacks. The first package is not written yet.",
+    hue: "#8FD3FF",
+    tier: 2,
+    focus: ".lead",
+    repo: `${github}/visuals`,
+  },
 ];
 
 /**
