@@ -285,7 +285,8 @@ export const curated: readonly Site[] = [
     hue: "#E05A8A",
     tier: 2,
     focus: "#app",
-    repo: `${github}/codeatlas`,
+    // The repository moved to the account metrograph-labs on 2026-11-17 (moves.ts).
+    repo: "https://github.com/metrograph-labs/codeatlas",
   },
   {
     kind: "site",
