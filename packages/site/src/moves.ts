@@ -21,7 +21,7 @@ export interface Move {
  * a planned move. Until the transfer the site of the repository has the old path, so GitHub Pages serves it and not these pages.
  * At the transfer these pages take over at once. The card, the links and the sitemap use the new address only after the day of the move.
  */
-export const moves: readonly Move[] = [{ repo: "codeatlas", to: "https://metrograph-labs.github.io/codeatlas/" }];
+export const moves: readonly Move[] = [{ repo: "codeatlas", to: "https://metrograph-labs.github.io/codeatlas/", movedAt: "2026-11-17" }];
 
 /**
  * This function gives the move of a path on this domain, or undefined. The path `/<repo>` and each path under `/<repo>/` match.
