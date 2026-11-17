@@ -15,7 +15,7 @@ The statuses are `done`, `in progress`, `next` and `later`.
 | P5 | Written cards for highways, layout-contract, packing and codeatlas | done (2026-10-29) | P3 | #11, #28, #32, #35 |
 | P6 | The UX round each week: better views and more interactive visuals | next | P2 | |
 | P7 | A new site shows at once, through a dispatch from its repository | later | P8 | |
-| P21 | The old path of a moved repository sends each visitor to its new address, and its card shows the site from there | in progress | P3 | |
+| P21 | The old path of a moved repository sends each visitor to its new address, and its card shows the site from there after the transfer | in progress | P3 | #156 |
 
 ## The automation
 

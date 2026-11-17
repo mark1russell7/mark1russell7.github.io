@@ -2,7 +2,7 @@ import react from "@vitejs/plugin-react";
 import { escapeAttribute as escape } from "@mark1russell7/text";
 import { defineConfig, type Plugin, type ProxyOptions, type UserConfig } from "vite";
 import { bio, links, pebbles, sites } from "./src/content.ts";
-import { addressOf, moveOf, movePage, moves, notFoundPage } from "./src/moves.ts";
+import { addressOf, movedOf, movePage, moves, notFoundPage } from "./src/moves.ts";
 import posterIds from "./src/posters.json" with { type: "json" };
 
 const origin = "https://mark1russell7.github.io";
@@ -11,7 +11,7 @@ const origin = "https://mark1russell7.github.io";
 // On GitHub Pages, the project sites are on the same origin as this site. In development, the proxy gives the same result,
 // so the pool can read the documents in its frames.
 const proxy: Record<string, ProxyOptions> = Object.fromEntries(
-  sites.filter((site) => !moveOf(site.path)).map((site) => [site.path, { target: origin, changeOrigin: true, secure: true }]),
+  sites.filter((site) => !movedOf(site.path)).map((site) => [site.path, { target: origin, changeOrigin: true, secure: true }]),
 );
 
 /** This function gives the full address of a site: its new address when it moved, or its path on this domain. */
@@ -96,8 +96,8 @@ function seo(): Plugin {
     `<?xml version="1.0" encoding="UTF-8"?>`,
     `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
     `  <url><loc>${origin}/</loc><lastmod>${today}</lastmod></url>`,
-    // A moved site is not in the sitemap: its old path only sends the visitor to the new address.
-    ...sites.filter((site) => !moveOf(site.path)).map((site) => `  <url><loc>${origin}${site.path}</loc></url>`),
+    // A moved site is not in the sitemap: its old path only sends the visitor to the new address. A planned move keeps its path.
+    ...sites.filter((site) => !movedOf(site.path)).map((site) => `  <url><loc>${origin}${site.path}</loc></url>`),
     `</urlset>`,
     ``,
   ].join("\n");

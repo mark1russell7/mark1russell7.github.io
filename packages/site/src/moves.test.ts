@@ -1,9 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { addressOf, type Move, moveOf, movePage, moves, notFoundPage, redirectScript } from "./moves.ts";
+import { addressOf, type Move, moveOf, movedOf, movePage, moves, notFoundPage, redirectScript } from "./moves.ts";
 
 const list: readonly Move[] = [
-  { repo: "codeatlas", to: "https://example.org/codeatlas/" },
-  { repo: "Funk", to: "https://example.org/Funk/" },
+  { repo: "codeatlas", to: "https://example.org/codeatlas/", movedAt: "2026-11-17" },
+  { repo: "Funk", to: "https://example.org/Funk/", movedAt: "2026-11-17" },
+  // A planned move: GitHub has not moved the repository, so its site is still at the old path.
+  { repo: "plan", to: "https://example.org/plan/" },
 ];
 
 /** This function starts a redirect script with a false location, and gives the address of its replace, or null. */
@@ -21,6 +23,8 @@ describe("moves", () => {
     ["/codeatlas", "https://example.org/codeatlas/"],
     ["/CodeAtlas/clones/a.html", "https://example.org/codeatlas/clones/a.html"],
     ["/funk/x/", "https://example.org/Funk/x/"],
+    ["/plan/", "/plan/"],
+    ["/plan/a.html", "/plan/a.html"],
     ["/codeatlasx/", "/codeatlasx/"],
     ["/packing/", "/packing/"],
     ["/", "/"],
@@ -28,12 +32,25 @@ describe("moves", () => {
     expect(addressOf(path, list)).toBe(address);
   });
 
-  test("the script gives the same address as addressOf, with the query and the fragment", () => {
+  test("the script gives the same address as addressOf after the move, with the query and the fragment", () => {
+    // The script sends each listed move away, also a planned one. GitHub Pages serves it only after the transfer, when no site has the path.
     const script = redirectScript(list);
-    for (const path of ["/codeatlas/", "/codeatlas", "/CODEATLAS/a/b", "/Funk/x", "/codeatlasx/", "/packing/", "/"]) {
+    const after = list.map((move) => ({ ...move, movedAt: "2026-11-17" }));
+    for (const path of ["/codeatlas/", "/codeatlas", "/CODEATLAS/a/b", "/Funk/x", "/plan/b", "/codeatlasx/", "/packing/", "/"]) {
       const moved = moveOf(path, list) !== undefined;
-      expect(redirect(script, `${path}?q=1#top`)).toBe(moved ? `${addressOf(path, list)}?q=1#top` : null);
+      expect(redirect(script, `${path}?q=1#top`)).toBe(moved ? `${addressOf(path, after)}?q=1#top` : null);
     }
+  });
+
+  test("a planned move keeps the old path for the card, and its pages are ready for the transfer (11-17)", () => {
+    // On 11-16 the card of codeatlas loaded its new address before the transfer, and the new address gave a 404.
+    const plan = list[2] as Move;
+    expect(moveOf("/plan/", list)).toBe(plan);
+    expect(movedOf("/plan/", list)).toBeUndefined();
+    expect(movedOf("/codeatlas/", list)).toBe(list[0]);
+    expect(movePage(plan)).toContain(`<meta http-equiv="refresh" content="0; url=${plan.to}">`);
+    const script = /<script>\n([\s\S]*?)\n<\/script>/.exec(notFoundPage(list))?.[1] ?? "";
+    expect(redirect(script, "/plan/a")).toBe("https://example.org/plan/a");
   });
 
   test("the page of an old path has a canonical link, a refresh, a link and its script", () => {
@@ -60,6 +77,7 @@ describe("moves", () => {
 
   test("each move has a new address with a slash at the end, and no move has a second entry", () => {
     for (const move of moves) expect(move.to).toMatch(/^https:\/\/[^/]+\/.+\/$/);
+    for (const move of moves) if (move.movedAt !== undefined) expect(move.movedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(new Set(moves.map((move) => move.repo.toLowerCase())).size).toBe(moves.length);
   });
 });
