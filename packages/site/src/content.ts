@@ -695,6 +695,18 @@ export const curated: readonly Site[] = [
     focus: ".lead",
     repo: `${github}/visuals`,
   },
+  {
+    kind: "site",
+    id: "system-stack",
+    name: "system-stack",
+    path: "/system-stack/",
+    tagline: "A system as records, and its risks as queries",
+    blurb: "It keeps each part of a system as one record: a person, a device, a host, a network, an account or a service. Each record tells what the part needs. A query over the records tells which parts work when some other parts are down. The spend add-on gives the cost of each part and a hard limit of its cost in a month, with a gate. The core and the spend add-on are written, and they are not on npm yet.",
+    hue: "#A0B86E",
+    tier: 2,
+    focus: ".lead",
+    repo: `${github}/system-stack`,
+  },
 ];
 
 /**
