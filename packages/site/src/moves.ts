@@ -1,7 +1,7 @@
 import { escapeAttribute as escape } from "@mark1russell7/text";
 
 /**
- * A repository that moved from this account to another owner. GitHub Pages serves its site at a new address.
+ * A repository that moves, or moved, from this account to another owner. GitHub Pages serves its site at a new address.
  * The old path on this domain sends each visitor to the same page at the new address.
  */
 export interface Move {
@@ -9,11 +9,17 @@ export interface Move {
   readonly repo: string;
   /** The new address of the site, with the slash at the end. */
   readonly to: string;
+  /**
+   * The day that GitHub moved the repository, as `YYYY-MM-DD`. A planned move has no day: its site is still at the old path, and
+   * the new address gives a 404. Set the day in the first change after the transfer.
+   */
+  readonly movedAt?: string;
 }
 
 /**
- * The repositories that moved. The build writes a page at each old path and a `404.html` for the old subpaths.
- * The card of a moved site shows the site from its new address.
+ * The repositories that move or moved. The build writes a page at each old path and a `404.html` for the old subpaths, also for
+ * a planned move. Until the transfer the site of the repository has the old path, so GitHub Pages serves it and not these pages.
+ * At the transfer these pages take over at once. The card, the links and the sitemap use the new address only after the day of the move.
  */
 export const moves: readonly Move[] = [{ repo: "codeatlas", to: "https://metrograph-labs.github.io/codeatlas/" }];
 
@@ -29,9 +35,15 @@ export function moveOf(path: string, list: readonly Move[] = moves): Move | unde
   });
 }
 
+/** This function gives the move of a path that GitHub did, or undefined. A planned move gives undefined: the site is still at the path. */
+export function movedOf(path: string, list: readonly Move[] = moves): Move | undefined {
+  const move = moveOf(path, list);
+  return move?.movedAt === undefined ? undefined : move;
+}
+
 /** This function gives the address to load for a path of this domain: the new address of a moved site, or the path. */
 export function addressOf(path: string, list: readonly Move[] = moves): string {
-  const move = moveOf(path, list);
+  const move = movedOf(path, list);
   return move ? move.to + path.slice(move.repo.length + 2) : path;
 }
 
