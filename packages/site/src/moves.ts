@@ -14,6 +14,11 @@ export interface Move {
    * the new address gives a 404. Set the day in the first change after the transfer.
    */
   readonly movedAt?: string;
+  /**
+   * The subpaths of the old site that get a page of their own, each with a slash at the end, for example `texts/privacy/`.
+   * GitHub Pages serves such a page with the status 200, but `404.html` with the status 404. Give each address that a form or a checker opens.
+   */
+  readonly paths?: readonly string[];
 }
 
 /**
@@ -21,7 +26,11 @@ export interface Move {
  * a planned move. Until the transfer the site of the repository has the old path, so GitHub Pages serves it and not these pages.
  * At the transfer these pages take over at once. The card, the links and the sitemap use the new address only after the day of the move.
  */
-export const moves: readonly Move[] = [{ repo: "codeatlas", to: "https://metrograph-labs.github.io/codeatlas/", movedAt: "2026-11-17" }];
+export const moves: readonly Move[] = [
+  { repo: "codeatlas", to: "https://metrograph-labs.github.io/codeatlas/", movedAt: "2026-11-17" },
+  // A planned move. Forms and checkers open the three texts pages directly, so each gets a page with the status 200.
+  { repo: "alerts", to: "https://metrograph-labs.github.io/alerts/", paths: ["texts/opt-in/", "texts/privacy/", "texts/terms/"] },
+];
 
 /**
  * This function gives the move of a path on this domain, or undefined. The path `/<repo>` and each path under `/<repo>/` match.
@@ -97,16 +106,28 @@ function page(title: string, head: readonly string[], body: readonly string[]): 
 }
 
 /**
- * This function gives the page at the old path of a moved site. Search engines read its canonical link and its refresh as a move.
+ * This function gives the page at an old path of a moved site: the path `/<repo>/`, or the subpath `sub` under it.
+ * Search engines read its canonical link and its refresh as a move. Each points to the same page at the new address.
  * A browser with scripts goes to the same subpath, query and fragment. A browser with no scripts follows the refresh.
  */
-export function movePage(move: Move): string {
-  const to = escape(move.to);
+export function movePage(move: Move, sub = ""): string {
+  const to = escape(move.to + sub);
   return page(
     `${move.repo} moved`,
     [`<link rel="canonical" href="${to}">`, `<script>\n${redirectScript([move])}\n</script>`, `<meta http-equiv="refresh" content="0; url=${to}">`],
-    [`<h1>${escape(move.repo)} moved</h1>`, `<p>The site of ${escape(move.repo)} is at <a href="${to}">${to}</a>.</p>`],
+    [`<h1>${escape(move.repo)} moved</h1>`, `<p>The site of ${escape(move.repo)} moved. This page is at <a href="${to}">${to}</a>.</p>`],
   );
+}
+
+/** One file of the build: its name under the root of the site, and its HTML. */
+export interface MoveFile {
+  readonly fileName: string;
+  readonly source: string;
+}
+
+/** This function gives the files of the old site of a move: the page at `/<repo>/`, and a page at each of its `paths`. */
+export function movePages(move: Move): MoveFile[] {
+  return ["", ...(move.paths ?? [])].map((sub) => ({ fileName: `${move.repo}/${sub}index.html`, source: movePage(move, sub) }));
 }
 
 /**

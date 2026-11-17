@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { addressOf, type Move, moveOf, movedOf, movePage, moves, notFoundPage, redirectScript } from "./moves.ts";
+import { addressOf, type Move, moveOf, movedOf, movePage, movePages, moves, notFoundPage, redirectScript } from "./moves.ts";
 
 const list: readonly Move[] = [
   { repo: "codeatlas", to: "https://example.org/codeatlas/", movedAt: "2026-11-17" },
@@ -63,6 +63,21 @@ describe("moves", () => {
     expect(redirect(script, "/codeatlas/?q#f")).toBe(`${move.to}?q#f`);
   });
 
+  test("a move gives a page at its old path and at each of its paths, each with the address of the same page (11-17)", () => {
+    // A form names the texts pages of a site. The 404.html gives them the status 404, so each gets a page of its own.
+    const move: Move = { repo: "alerts", to: "https://example.org/alerts/", paths: ["texts/privacy/", "texts/opt-in/"] };
+    const files = movePages(move);
+    expect(files.map((file) => file.fileName)).toEqual(["alerts/index.html", "alerts/texts/privacy/index.html", "alerts/texts/opt-in/index.html"]);
+    expect(files[0]?.source).toBe(movePage(move));
+    const privacy = files[1]?.source ?? "";
+    expect(privacy).toContain(`<link rel="canonical" href="https://example.org/alerts/texts/privacy/">`);
+    expect(privacy).toContain(`<meta http-equiv="refresh" content="0; url=https://example.org/alerts/texts/privacy/">`);
+    expect(privacy).toContain(`<a href="https://example.org/alerts/texts/privacy/">`);
+    const script = /<script>\n([\s\S]*?)\n<\/script>/.exec(privacy)?.[1] ?? "";
+    expect(redirect(script, "/alerts/texts/privacy/?a#b")).toBe("https://example.org/alerts/texts/privacy/?a#b");
+    expect(movePages({ repo: "x", to: "https://example.org/x/" }).map((file) => file.fileName)).toEqual(["x/index.html"]);
+  });
+
   test("the 404 page sends each moved subpath away and keeps each other path", () => {
     const html = notFoundPage(list);
     expect(html).toContain(`<meta name="robots" content="noindex">`);
@@ -78,6 +93,9 @@ describe("moves", () => {
   test("each move has a new address with a slash at the end, and no move has a second entry", () => {
     for (const move of moves) expect(move.to).toMatch(/^https:\/\/[^/]+\/.+\/$/);
     for (const move of moves) if (move.movedAt !== undefined) expect(move.movedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    // A path is relative to the old site, with a slash at the end, and it names no parent folder.
+    for (const move of moves) for (const path of move.paths ?? []) expect(path).toMatch(/^([a-z0-9][a-z0-9-]*\/)+$/);
+    for (const move of moves) expect(new Set(move.paths ?? []).size).toBe((move.paths ?? []).length);
     expect(new Set(moves.map((move) => move.repo.toLowerCase())).size).toBe(moves.length);
   });
 });
