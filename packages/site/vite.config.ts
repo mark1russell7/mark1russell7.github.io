@@ -2,7 +2,7 @@ import react from "@vitejs/plugin-react";
 import { escapeAttribute as escape } from "@mark1russell7/text";
 import { defineConfig, type Plugin, type ProxyOptions, type UserConfig } from "vite";
 import { bio, links, pebbles, sites } from "./src/content.ts";
-import { addressOf, movedOf, movePage, moves, notFoundPage } from "./src/moves.ts";
+import { addressOf, movedOf, movePages, moves, notFoundPage } from "./src/moves.ts";
 import posterIds from "./src/posters.json" with { type: "json" };
 
 const origin = "https://mark1russell7.github.io";
@@ -115,14 +115,14 @@ function seo(): Plugin {
 }
 
 /**
- * This plugin writes a page at the old path of each moved site, and the `404.html` of the domain.
+ * This plugin writes a page at the old path of each moved site and at each of its `paths`, and the `404.html` of the domain.
  * GitHub Pages serves `404.html` for each missing path, so an old subpath of a moved site goes to its new address too.
  */
 function moved(): Plugin {
   return {
     name: "portfolio-moved",
     generateBundle() {
-      for (const move of moves) this.emitFile({ type: "asset", fileName: `${move.repo}/index.html`, source: movePage(move) });
+      for (const move of moves) for (const file of movePages(move)) this.emitFile({ type: "asset", ...file });
       this.emitFile({ type: "asset", fileName: "404.html", source: notFoundPage(moves) });
     },
   };
