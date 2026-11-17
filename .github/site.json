@@ -1,7 +1,9 @@
 {
   "$comment": "The site config of this repository (CI.md of the template, \"The site config\"). The Pages workflow deploys this site from main, and a job of ci.yml checks it on each pull request.",
   "github-token": true,
-  "build": "node packages/site/scripts/discover.ts\npnpm --filter @portfolio/site exec playwright install --with-deps chromium\nnode packages/site/scripts/posters.ts\npnpm --filter @portfolio/site build\nnode packages/site/scripts/manifest.ts\n",
+  "build": "node packages/site/scripts/discover.ts\nnode packages/site/scripts/posters.ts\npnpm --filter @portfolio/site build\nnode packages/site/scripts/manifest.ts\n",
+  "playwright-browsers": "chromium",
+  "playwright-command": "pnpm --filter @portfolio/site exec playwright",
   "out": "packages/site/dist",
   "base": "/",
   "site-name": "mark1russell7.github.io",

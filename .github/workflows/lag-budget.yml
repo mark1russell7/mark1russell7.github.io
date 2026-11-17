@@ -48,7 +48,12 @@ jobs:
           node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @portfolio/site exec playwright install --with-deps chromium
+      # The action of the template installs Chromium from a cache, with a time limit and a second try.
+      - name: Chromium
+        uses: mark1russell7/template/.github/actions/setup-playwright@94adcfe753a1ec7d03cc03f445f1f0559d5c205f # main
+        with:
+          browsers: chromium
+          command: pnpm --filter @portfolio/site exec playwright
       # The Pages workflow does this discovery before each build. Without it the built site has fewer cards than the live site.
       - name: Build the site as the Pages workflow does
         env:
