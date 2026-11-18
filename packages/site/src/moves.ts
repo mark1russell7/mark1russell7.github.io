@@ -28,8 +28,8 @@ export interface Move {
  */
 export const moves: readonly Move[] = [
   { repo: "codeatlas", to: "https://metrograph-labs.github.io/codeatlas/", movedAt: "2026-11-17" },
-  // A planned move. Forms and checkers open the three texts pages directly, so each gets a page with the status 200.
-  { repo: "alerts", to: "https://metrograph-labs.github.io/alerts/", paths: ["texts/opt-in/", "texts/privacy/", "texts/terms/"] },
+  // Forms and checkers open the three texts pages directly, so each gets a page with the status 200.
+  { repo: "alerts", to: "https://metrograph-labs.github.io/alerts/", movedAt: "2026-11-17", paths: ["texts/opt-in/", "texts/privacy/", "texts/terms/"] },
 ];
 
 /**
