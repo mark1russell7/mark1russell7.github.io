@@ -13,4 +13,4 @@ Write all prose of this repository in the style of ASD-STE100 Simplified Technic
 
 ## Roadmap
 
-The roadmap is `docs/ROADMAP.md`. The Status page of the site shows it. Its tracker in the fleet is the folder `artifacts/portfolio-roadmap/`, at `http://127.0.0.1:4731/a/portfolio-roadmap/`. Change the roadmap and the tracker together.
+The roadmap is `docs/ROADMAP.md`. The Status page of the site shows it.

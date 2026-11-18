@@ -1,6 +1,6 @@
 # Roadmap
 
-This file is the one list of the work on the portfolio site. Each item has an ID and a status. The tracker of the fleet mirrors this file, and the Status page of the site shows it.
+This file is the one list of the work on the portfolio site. Each item has an ID and a status. The Status page of the site shows it.
 
 The statuses are `done`, `in progress`, `next` and `later`.
 
@@ -22,7 +22,7 @@ The statuses are `done`, `in progress`, `next` and `later`.
 | ID | Item | Status | Depends on | PR |
 | --- | --- | --- | --- | --- |
 | P8 | An hourly discovery deploys only when the list of sites changes, and writes `uncurated.json` | done (2026-10-27) | P3 | #28, #29 |
-| P9 | The card sweep: the organizer writes a card on the same day for each site with an automatic card | in progress (each day) | P8 | |
+| P9 | The card sweep: each site with an automatic card gets a written card on the same day | in progress (each day) | P8 | |
 
 ## The checks
 
@@ -32,7 +32,7 @@ The statuses are `done`, `in progress`, `next` and `later`.
 | P11 | The shared Pages workflow, with the Status and Releases pages | done (2026-10-29) | P8 | #33 |
 | P12 | The gates fail closed: `CI OK`, `Security OK`, a type check of all the code and a guard against an empty list of sites | done (2026-10-30) | P10 | #36, #37, #40, #41 |
 | P13 | The shared conventions check, version 0.7.0, with the rule `roadmap-parses` | done (2026-10-30) | P12 | #45, #49 |
-| P14 | This roadmap, on the Status page and in the tracker of the fleet | done (2026-10-30) | P11, P13 | #47 |
+| P14 | This roadmap, on the Status page | done (2026-10-30) | P11, P13 | #47 |
 
 ## The lag of the site
 
