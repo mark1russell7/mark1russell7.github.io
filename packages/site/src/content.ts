@@ -709,6 +709,18 @@ export const curated: readonly Site[] = [
     focus: ".lead",
     repo: `${github}/system-stack`,
   },
+  {
+    kind: "site",
+    id: "capacity",
+    name: "capacity",
+    path: "/capacity/",
+    tagline: "The cost of one request, as laws over the load",
+    blurb: "A law gives one cost of a request as a function of the load: CPU time, memory, garbage collection time, event-loop lag or network bytes. The laws have three layers: bare Node, the service runner and each app. The scale rule of a service comes from its laws: the load at which it needs one more instance. Timed runs start only in CI. The law record and the subjects of bare Node are written, and they are not on npm yet.",
+    hue: "#C98BB9",
+    tier: 2,
+    focus: ".lead",
+    repo: `${github}/capacity`,
+  },
 ];
 
 /**
