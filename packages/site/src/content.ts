@@ -658,7 +658,8 @@ export const curated: readonly Site[] = [
     hue: "#E4572E",
     tier: 2,
     focus: ".lead",
-    repo: `${github}/alerts`,
+    // The repository moved to the account metrograph-labs on 2026-11-17 (moves.ts).
+    repo: "https://github.com/metrograph-labs/alerts",
   },
   {
     kind: "site",
