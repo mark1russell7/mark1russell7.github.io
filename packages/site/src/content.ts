@@ -745,6 +745,18 @@ export const curated: readonly Site[] = [
     focus: ".lead",
     repo: `${github}/stock`,
   },
+  {
+    kind: "site",
+    id: "cartography",
+    name: "cartography",
+    path: "/cartography/",
+    tagline: "Maps as data, rendered to SVG for print",
+    blurb: "A map is data: a frame, layers and a style for each layer. The render gives SVG for print, with a scale bar and the attribution of each source. The first package is not written yet.",
+    hue: "#D47F6A",
+    tier: 2,
+    focus: ".lead",
+    repo: `${github}/cartography`,
+  },
 ];
 
 /**
