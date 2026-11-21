@@ -721,6 +721,30 @@ export const curated: readonly Site[] = [
     focus: ".lead",
     repo: `${github}/capacity`,
   },
+  {
+    kind: "site",
+    id: "guidebook",
+    name: "guidebook",
+    path: "/guidebook/",
+    tagline: "Cited knowledge, with a source and a license for each unit",
+    blurb: "Each unit of text is a quote, a summary or a fact, and each unit cites its source. Each source has its license. The source gate examines each unit and its source, and it gives each problem as data. The plans add-on keeps the steps of a plan by a case and by a phase of a time ladder. The phases go from the first 5 minutes to 5 years. The core and the plans add-on are written, and they are not on npm yet.",
+    hue: "#C2B280",
+    tier: 2,
+    focus: ".lead",
+    repo: `${github}/guidebook`,
+  },
+  {
+    kind: "site",
+    id: "stock",
+    name: "stock",
+    path: "/stock/",
+    tagline: "Stock with due dates, first expiring first out",
+    blurb: "A lot is an amount of one product at one place, with its date of purchase and its due date. A due rule is data: the date on the label, or a count of days with its source. The package gives the amount of each resource at a date and the draws of first expiring, first out. It also gives the date to start to use each lot. An append-only log gives the same stock in each order of arrival. The first package is written, and it is not on npm yet.",
+    hue: "#7FB069",
+    tier: 2,
+    focus: ".lead",
+    repo: `${github}/stock`,
+  },
 ];
 
 /**
