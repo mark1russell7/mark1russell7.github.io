@@ -167,8 +167,8 @@ importers:
   .:
     devDependencies:
       '@mark1russell7/conventions':
-        specifier: ^0.49.0
-        version: 0.49.2
+        specifier: ^0.50.7
+        version: 0.50.7
       '@mark1russell7/cue':
         specifier: ^2.1.1
         version: 2.1.4
@@ -202,7 +202,7 @@ importers:
         version: 2.1.4
       '@mark1russell7/rigor-bench':
         specifier: ^0.3.1
-        version: 0.3.1(esbuild@0.28.2)
+        version: 0.3.2(esbuild@0.28.2)
       '@mark1russell7/text':
         specifier: ^0.0.17
         version: 0.0.17
@@ -605,8 +605,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@mark1russell7/conventions@0.49.2':
-    resolution: {integrity: sha512-nEi2PykniB/toZ8VLl8wPa6rIw1zCgMUZ1MzTKzR0/Nn3krQB0yZHcFzi20H9VKBSo/mW0PpS0dMawY7nYZY0g==}
+  '@mark1russell7/conventions@0.50.7':
+    resolution: {integrity: sha512-1tx4G5JETCH+sccyKiNXi9rVviMEnFJS3RNpPnwI5/3Cp2DFKkyGZCKJpEh+uXJ5BSli5NrgWAV0lWTOnKWHSQ==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -619,8 +619,8 @@ packages:
     resolution: {integrity: sha512-Pb978ZnvlAxzcdWtRtqTGb7mZFCvlNrdKnpZqhxQ7gafzeNGf1JqYFuB4RWiLbJzRuFUWjEoAVG5f2TndCIlSg==}
     engines: {node: '>=22'}
 
-  '@mark1russell7/rigor-bench@0.3.1':
-    resolution: {integrity: sha512-XMmdTyEpbu9UEox1aYpxS54H7mef3gVITTc0W1j0DP1ddVkUHcghE4hLjHY7ftQL92blPAppwWIpAMYudUG7VQ==}
+  '@mark1russell7/rigor-bench@0.3.2':
+    resolution: {integrity: sha512-wZ6YWq5974qhud6W+PNpBnO6xrZpGJCAbKcIw3ICfrEnTDWZRWHgn0vBKBlRJIPcJBn9o5SYNN5NKz+prp9/HA==}
     engines: {node: '>=22'}
     hasBin: true
     peerDependencies:
@@ -1594,7 +1594,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@mark1russell7/conventions@0.49.2':
+  '@mark1russell7/conventions@0.50.7':
     dependencies:
       '@mark1russell7/text': 0.0.17
       yaml: 2.9.1
@@ -1603,7 +1603,7 @@ snapshots:
 
   '@mark1russell7/files@0.0.4': {}
 
-  '@mark1russell7/rigor-bench@0.3.1(esbuild@0.28.2)':
+  '@mark1russell7/rigor-bench@0.3.2(esbuild@0.28.2)':
     dependencies:
       '@mark1russell7/rigor-generators': 0.2.0
       '@mark1russell7/rigor-statistics': 0.2.17
