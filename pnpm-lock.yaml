@@ -202,7 +202,7 @@ importers:
         version: 2.1.4
       '@mark1russell7/rigor-bench':
         specifier: ^0.3.1
-        version: 0.3.2(esbuild@0.28.2)
+        version: 0.3.3(esbuild@0.28.2)
       '@mark1russell7/text':
         specifier: ^0.0.17
         version: 0.0.17
@@ -619,8 +619,8 @@ packages:
     resolution: {integrity: sha512-Pb978ZnvlAxzcdWtRtqTGb7mZFCvlNrdKnpZqhxQ7gafzeNGf1JqYFuB4RWiLbJzRuFUWjEoAVG5f2TndCIlSg==}
     engines: {node: '>=22'}
 
-  '@mark1russell7/rigor-bench@0.3.2':
-    resolution: {integrity: sha512-wZ6YWq5974qhud6W+PNpBnO6xrZpGJCAbKcIw3ICfrEnTDWZRWHgn0vBKBlRJIPcJBn9o5SYNN5NKz+prp9/HA==}
+  '@mark1russell7/rigor-bench@0.3.3':
+    resolution: {integrity: sha512-8iOCvKVL1jyhQrp++N01H317sEBGa8ZHCj1ubQLYVIzZD2kXXEvyNjH0OzmVWI6SSWuv1FYSyO+dt3Fw0c49uA==}
     engines: {node: '>=22'}
     hasBin: true
     peerDependencies:
@@ -633,8 +633,8 @@ packages:
     resolution: {integrity: sha512-eTyJhK4Nowx1KQ3QrsQqLiAlhFoL+8m1OT6He+X0Lf0G/0f9OyQC8ponQLViQKRkP/ef10B6oACFjtjnKErobg==}
     engines: {node: '>=22'}
 
-  '@mark1russell7/rigor-statistics@0.2.17':
-    resolution: {integrity: sha512-+z/7h7C+ERO2wnM3RgZJ5D+egYPzFezPvWFqePB0DyBUqkD03WOpVPK63+xHmacJvkhtwmNBCKA/Zb3GK1DdnQ==}
+  '@mark1russell7/rigor-statistics@0.2.19':
+    resolution: {integrity: sha512-zMfirguRPEJin3H1q5Rl3kCl6b5M5QSg0ukd/damhZXPwLEUQ/oAYXoRAJA5sSZ7tHW4wZF9DhK8FidiMGsbbg==}
     engines: {node: '>=22'}
 
   '@mark1russell7/ste-lint@0.4.0':
@@ -1603,17 +1603,17 @@ snapshots:
 
   '@mark1russell7/files@0.0.4': {}
 
-  '@mark1russell7/rigor-bench@0.3.2(esbuild@0.28.2)':
+  '@mark1russell7/rigor-bench@0.3.3(esbuild@0.28.2)':
     dependencies:
       '@mark1russell7/rigor-generators': 0.2.0
-      '@mark1russell7/rigor-statistics': 0.2.17
+      '@mark1russell7/rigor-statistics': 0.2.19
       '@mark1russell7/text': 0.0.17
     optionalDependencies:
       esbuild: 0.28.2
 
   '@mark1russell7/rigor-generators@0.2.0': {}
 
-  '@mark1russell7/rigor-statistics@0.2.17':
+  '@mark1russell7/rigor-statistics@0.2.19':
     dependencies:
       '@mark1russell7/rigor-generators': 0.2.0
 
