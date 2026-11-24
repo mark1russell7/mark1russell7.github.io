@@ -42,7 +42,8 @@ for (const [id, name] of [
 // The address opens a site in a panel. This check server has no other site, so a press on a card goes to its repository.
 location.hash = "#pond/vex";
 check("an address opens the panel of a site", await until(() => $(PANEL) !== null), location.hash);
-check("the panel shows the site", $(`${PANEL} iframe`)?.getAttribute("src") === "/vex/", $(`${PANEL} iframe`)?.getAttribute("src"));
+// The site of vex is at /vex/ on this domain, or at its new address after a move (moves.ts). Each ends with /vex/.
+check("the panel shows the site", /\/vex\/$/.test($(`${PANEL} iframe`)?.getAttribute("src") ?? ""), $(`${PANEL} iframe`)?.getAttribute("src"));
 
 // The Escape key closes the panel, and the address follows.
 dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));

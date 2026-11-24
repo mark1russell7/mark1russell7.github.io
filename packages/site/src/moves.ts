@@ -30,6 +30,15 @@ export const moves: readonly Move[] = [
   { repo: "codeatlas", to: "https://metrograph-labs.github.io/codeatlas/", movedAt: "2026-11-17" },
   // Forms and checkers open the three texts pages directly, so each gets a page with the status 200.
   { repo: "alerts", to: "https://metrograph-labs.github.io/alerts/", movedAt: "2026-11-17", paths: ["texts/opt-in/", "texts/privacy/", "texts/terms/"] },
+  { repo: "capacity", to: "https://metrograph-labs.github.io/capacity/", movedAt: "2026-11-24" },
+  { repo: "highways", to: "https://metrograph-labs.github.io/highways/", movedAt: "2026-11-24" },
+  { repo: "ireko", to: "https://metrograph-labs.github.io/ireko/", movedAt: "2026-11-24" },
+  { repo: "layout-contract", to: "https://metrograph-labs.github.io/layout-contract/", movedAt: "2026-11-24" },
+  { repo: "netdiag", to: "https://metrograph-labs.github.io/netdiag/", movedAt: "2026-11-24" },
+  { repo: "packing", to: "https://metrograph-labs.github.io/packing/", movedAt: "2026-11-24" },
+  { repo: "systems", to: "https://metrograph-labs.github.io/systems/", movedAt: "2026-11-24" },
+  { repo: "typeset", to: "https://metrograph-labs.github.io/typeset/", movedAt: "2026-11-24" },
+  { repo: "vex", to: "https://metrograph-labs.github.io/vex/", movedAt: "2026-11-24" },
 ];
 
 /**
