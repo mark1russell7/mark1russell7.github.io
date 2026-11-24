@@ -69,7 +69,8 @@ export const curated: readonly Site[] = [
     hue: "#93D86C",
     tier: 1,
     focus: ".sy-frame",
-    repo: `${github}/systems`,
+    // The repository moved to the account metrograph-labs on 2026-11-24 (moves.ts).
+    repo: "https://github.com/metrograph-labs/systems",
   },
   {
     kind: "site",
@@ -141,7 +142,8 @@ export const curated: readonly Site[] = [
     hue: "#5B86FF",
     tier: 2,
     poster: "/vex/og.png",
-    repo: `${github}/vex`,
+    // The repository moved to the account metrograph-labs on 2026-11-24 (moves.ts).
+    repo: "https://github.com/metrograph-labs/vex",
   },
   {
     kind: "site",
@@ -201,7 +203,8 @@ export const curated: readonly Site[] = [
     tier: 2,
     focus: ".ik-live",
     poster: "/ireko/og/index.png",
-    repo: `${github}/ireko`,
+    // The repository moved to the account metrograph-labs on 2026-11-24 (moves.ts).
+    repo: "https://github.com/metrograph-labs/ireko",
   },
   {
     kind: "site",
@@ -213,7 +216,8 @@ export const curated: readonly Site[] = [
     hue: "#EE7BD0",
     tier: 2,
     focus: ".stage",
-    repo: `${github}/highways`,
+    // The repository moved to the account metrograph-labs on 2026-11-24 (moves.ts).
+    repo: "https://github.com/metrograph-labs/highways",
   },
   {
     kind: "site",
@@ -225,7 +229,8 @@ export const curated: readonly Site[] = [
     hue: "#7FDBCA",
     tier: 2,
     focus: "#stages",
-    repo: `${github}/packing`,
+    // The repository moved to the account metrograph-labs on 2026-11-24 (moves.ts).
+    repo: "https://github.com/metrograph-labs/packing",
   },
   {
     kind: "site",
@@ -237,7 +242,8 @@ export const curated: readonly Site[] = [
     hue: "#E8A87C",
     tier: 2,
     focus: "#bench",
-    repo: `${github}/layout-contract`,
+    // The repository moved to the account metrograph-labs on 2026-11-24 (moves.ts).
+    repo: "https://github.com/metrograph-labs/layout-contract",
   },
   {
     kind: "site",
@@ -394,7 +400,8 @@ export const curated: readonly Site[] = [
     hue: "#7058EC",
     tier: 2,
     focus: "#lab",
-    repo: `${github}/typeset`,
+    // The repository moved to the account metrograph-labs on 2026-11-24 (moves.ts).
+    repo: "https://github.com/metrograph-labs/typeset",
   },
   {
     kind: "site",
@@ -683,7 +690,8 @@ export const curated: readonly Site[] = [
     hue: "#3DBFA0",
     tier: 2,
     focus: ".lead",
-    repo: `${github}/netdiag`,
+    // The repository moved to the account metrograph-labs on 2026-11-24 (moves.ts).
+    repo: "https://github.com/metrograph-labs/netdiag",
   },
   {
     kind: "site",
@@ -719,7 +727,8 @@ export const curated: readonly Site[] = [
     hue: "#C98BB9",
     tier: 2,
     focus: ".lead",
-    repo: `${github}/capacity`,
+    // The repository moved to the account metrograph-labs on 2026-11-24 (moves.ts).
+    repo: "https://github.com/metrograph-labs/capacity",
   },
   {
     kind: "site",
