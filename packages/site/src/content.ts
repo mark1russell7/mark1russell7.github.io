@@ -1,4 +1,5 @@
 import discovered from "./discovered.json" with { type: "json" };
+import { home } from "./moves.ts";
 
 /** A project with its own site under this domain. The pool shows the site live in a frame. */
 export interface Site {
@@ -45,11 +46,13 @@ export type Item = Site | Tile | Pebble;
 export const FRAME_WIDTH = 1280;
 export const FRAME_HEIGHT = 800;
 
-const github = "https://github.com/mark1russell7";
+const github = `https://github.com/${home}`;
 
 /** A public repository with a GitHub Pages site, as `scripts/discover.ts` found it. */
 export interface Discovered {
   readonly repo: string;
+  /** The login of the owner of the repository. A list from before 2026-11-25 has no owner: then the owner is the home owner. */
+  readonly owner?: string;
   readonly path: string;
   readonly description: string;
 }
@@ -784,7 +787,7 @@ export function autoSite(found: Discovered, index: number): Site {
     blurb: text,
     hue: curated[index % curated.length]?.hue ?? "#93D86C",
     tier: 2,
-    repo: `${github}/${found.repo}`,
+    repo: `https://github.com/${found.owner ?? home}/${found.repo}`,
   };
 }
 
