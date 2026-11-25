@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { addressOf, type Move, moveOf, movedOf, movePage, movePages, moves, notFoundPage, redirectScript } from "./moves.ts";
+import discovered from "./discovered.json" with { type: "json" };
+import { autoSite } from "./content.ts";
+import { addressOf, type Move, moveOf, movedOf, moveProblems, movePage, movePages, moves, notFoundPage, pagesAddress, redirectScript, withFound, writtenMoves } from "./moves.ts";
 
 const list: readonly Move[] = [
   { repo: "codeatlas", to: "https://example.org/codeatlas/", movedAt: "2026-11-17" },
@@ -97,5 +99,62 @@ describe("moves", () => {
     for (const move of moves) for (const path of move.paths ?? []) expect(path).toMatch(/^([a-z0-9][a-z0-9-]*\/)+$/);
     for (const move of moves) expect(new Set(move.paths ?? []).size).toBe((move.paths ?? []).length);
     expect(new Set(moves.map((move) => move.repo.toLowerCase())).size).toBe(moves.length);
+  });
+});
+
+// P22: the discovery reads each owner. A repository that moves to another owner keeps its card at the Pages host of that owner.
+describe("the sites of each owner", () => {
+  const found = [
+    { repo: "plan", owner: "metrograph-labs" },
+    { repo: "fresh", owner: "Metrograph-Labs" },
+    { repo: "codeatlas", owner: "metrograph-labs" },
+    { repo: "stay", owner: "mark1russell7" },
+    { repo: "old" },
+  ];
+
+  test("a planned move takes effect when the discovery finds the repository at the new owner", () => {
+    const after = withFound(list, found);
+    expect(movedOf("/plan/", list)).toBeUndefined();
+    expect(movedOf("/plan/x", after)?.found).toBe(true);
+    expect(addressOf("/plan/x", after)).toBe("https://example.org/plan/x");
+  });
+
+  test("a site of another owner with no written move gets the Pages address of its owner", () => {
+    const after = withFound(list, found);
+    expect(addressOf("/fresh/", after)).toBe("https://metrograph-labs.github.io/fresh/");
+    expect(addressOf("/stay/", after)).toBe("/stay/");
+    expect(addressOf("/old/", after)).toBe("/old/");
+    expect(after.filter((move) => move.repo === "codeatlas")).toHaveLength(1);
+  });
+
+  test("the card of a site of each owner links to the repository of its owner", () => {
+    expect(autoSite({ repo: "fresh", owner: "metrograph-labs", path: "/fresh/", description: "A site." }, 0).repo).toBe("https://github.com/metrograph-labs/fresh");
+    expect(autoSite({ repo: "stay", owner: "mark1russell7", path: "/stay/", description: "A site." }, 0).repo).toBe("https://github.com/mark1russell7/stay");
+    expect(autoSite({ repo: "old", path: "/old/", description: "A site." }, 0).repo).toBe("https://github.com/mark1russell7/old");
+  });
+
+  test("a written move that the discovery contradicts is a problem", () => {
+    const written: Move[] = [
+      { repo: "stay", to: "https://metrograph-labs.github.io/stay/", movedAt: "2026-11-24" },
+      { repo: "fresh", to: "https://example.org/fresh/", movedAt: "2026-11-24" },
+      { repo: "old", to: "https://metrograph-labs.github.io/old/", movedAt: "2026-11-24" },
+    ];
+    expect(moveProblems(written, found)).toEqual([
+      "stay: the move has the day 2026-11-24, but the discovery finds the repository at mark1russell7",
+      "fresh: the move goes to https://example.org/fresh/, but the site of Metrograph-Labs/fresh is at https://metrograph-labs.github.io/fresh/",
+    ]);
+    expect(pagesAddress("Metrograph-Labs", "fresh")).toBe("https://metrograph-labs.github.io/fresh/");
+  });
+
+  test("the written moves agree with the discovered list", () => {
+    expect(moveProblems(writtenMoves, discovered)).toEqual([]);
+  });
+
+  test("the discovered list holds a site of each owner, and each moved site of the list is at its owner", () => {
+    const owners = new Set(discovered.map((f) => (f as { owner?: string }).owner));
+    expect([...owners].sort()).toEqual(["mark1russell7", "metrograph-labs"]);
+    for (const f of discovered as { repo: string; owner?: string; path: string }[]) {
+      if (f.owner && f.owner !== "mark1russell7") expect(addressOf(f.path)).toBe(pagesAddress(f.owner, f.repo));
+    }
   });
 });

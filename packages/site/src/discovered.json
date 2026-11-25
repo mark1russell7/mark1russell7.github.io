@@ -1,61 +1,73 @@
 [
   {
     "repo": "AsyncBrowserContext",
+    "owner": "mark1russell7",
     "path": "/AsyncBrowserContext/",
     "description": "AsyncLocalStorage and the TC39 AsyncContext API for browsers: the context stays through await, then, timers, events and generators."
   },
   {
     "repo": "client",
+    "owner": "mark1russell7",
     "path": "/client/",
     "description": "Procedures as data for TypeScript: one typed call model for in-process, HTTP, WebSocket, CLI and MCP (Claude) — with streaming, middleware and a visual composer."
   },
   {
     "repo": "coeval",
+    "owner": "mark1russell7",
     "path": "/coeval/",
     "description": "A base for declarative languages: a document gets its meaning from a question. Its kind names the evaluator, and a ladder finds it."
   },
   {
     "repo": "crawler",
+    "owner": "mark1russell7",
     "path": "/crawler/",
     "description": "polite-crawler: a polite web crawler for research and AI agents. Fetch once, keep it, read it many times. robots.txt, one request per site, full-text search, MCP server."
   },
   {
     "repo": "highways",
+    "owner": "metrograph-labs",
     "path": "/highways/",
     "description": "Edge routing for large graphs: fractal highways, bundles by rule, plugs and zoom levels, with a benchmark of the strategies."
   },
   {
     "repo": "ireko",
+    "owner": "metrograph-labs",
     "path": "/ireko/",
     "description": "Composable graph and tree layout for TypeScript. Select a layout for each container, and get boxes and routed edges for SVG, Canvas, the DOM or React Flow."
   },
   {
     "repo": "lag",
+    "owner": "mark1russell7",
     "path": "/lag/",
     "description": "Main-thread lag monitoring for browser apps: event loop lag, long tasks, Long Animation Frames, hangs, INP and Web Vitals from real users, as OpenTelemetry metrics, events and traces."
   },
   {
     "repo": "packing",
+    "owner": "metrograph-labs",
     "path": "/packing/",
     "description": "Rectangle packing for layouts: many strategies, an algebra of measures, benchmarks in CI."
   },
   {
     "repo": "page-lifecycle-tracker",
+    "owner": "mark1russell7",
     "path": "/page-lifecycle-tracker/",
     "description": "The Page Lifecycle API state of a web page (active, passive, hidden, frozen, terminated) for monitoring and telemetry libraries: one shared tracker, observers before exporters, back/forward cache restores."
   },
   {
     "repo": "render",
+    "owner": "mark1russell7",
     "path": "/render/",
     "description": "A reactive expression engine for TypeScript whose interface renders its own expressions: ordered epochs, classes as data, and a live editor."
   },
   {
     "repo": "systems",
+    "owner": "metrograph-labs",
     "path": "/systems/",
     "description": "How long until a client knows that its peer is gone: computed by an algebra, measured by a harness."
   },
   {
     "repo": "vex",
+    "owner": "metrograph-labs",
     "path": "/vex/",
     "description": "Typed spreadsheet formulas over TypeScript objects: one formula evaluated at each record, axes over related records, sheets with cycle detection, and an error value with a reason instead of an exception."
   }

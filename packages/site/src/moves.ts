@@ -1,4 +1,14 @@
 import { escapeAttribute as escape } from "@mark1russell7/text";
+import discovered from "./discovered.json" with { type: "json" };
+
+/** The owner of this domain: its user site is at `https://<home>.github.io/`. */
+export const home = "mark1russell7";
+
+/** A site that the discovery found: its repository and the login of its owner. A list from before 2026-11-25 has no owner. */
+export interface FoundSite {
+  readonly repo: string;
+  readonly owner?: string;
+}
 
 /**
  * A repository that moves, or moved, from this account to another owner. GitHub Pages serves its site at a new address.
@@ -19,6 +29,42 @@ export interface Move {
    * GitHub Pages serves such a page with the status 200, but `404.html` with the status 404. Give each address that a form or a checker opens.
    */
   readonly paths?: readonly string[];
+  /** True when the discovery found the repository at another owner. Then the site is at the new address, also with no day. */
+  readonly found?: boolean;
+}
+
+/** This function gives the address of the site of a repository at the Pages host of its owner, with the slash at the end. */
+export const pagesAddress = (owner: string, repo: string): string => `https://${owner.toLowerCase()}.github.io/${repo}/`;
+
+/**
+ * This function gives the moves of a written list and of the discovery. A site that the discovery finds at another owner is
+ * at the Pages host of that owner. A written move of that repository gets `found`, so a planned move takes effect at the
+ * first discovery after the transfer. A site with no written move gets a move of its own. Thus a moved repository keeps
+ * its card with no change to this file. A new repository of another owner gets its card at its own address.
+ */
+export function withFound(written: readonly Move[], found: readonly FoundSite[]): Move[] {
+  const away = new Map(found.filter((f) => f.owner !== undefined && f.owner.toLowerCase() !== home).map((f) => [f.repo.toLowerCase(), f]));
+  const list = written.map((move) => (away.has(move.repo.toLowerCase()) ? { ...move, found: true } : move));
+  const known = new Set(written.map((move) => move.repo.toLowerCase()));
+  for (const [key, f] of away) if (!known.has(key)) list.push({ repo: f.repo, to: pagesAddress(f.owner as string, f.repo), found: true });
+  return list;
+}
+
+/**
+ * This function gives the problems of a written list against the discovery. A move that has a day, but whose repository the
+ * discovery finds at the home owner, is wrong. A written address that is not the Pages address of the found owner is wrong.
+ */
+export function moveProblems(written: readonly Move[], found: readonly FoundSite[]): string[] {
+  const byRepo = new Map(found.map((f) => [f.repo.toLowerCase(), f]));
+  const problems: string[] = [];
+  for (const move of written) {
+    const f = byRepo.get(move.repo.toLowerCase());
+    if (!f?.owner) continue;
+    if (f.owner.toLowerCase() === home) {
+      if (move.movedAt !== undefined) problems.push(`${move.repo}: the move has the day ${move.movedAt}, but the discovery finds the repository at ${home}`);
+    } else if (move.to !== pagesAddress(f.owner, f.repo)) problems.push(`${move.repo}: the move goes to ${move.to}, but the site of ${f.owner}/${f.repo} is at ${pagesAddress(f.owner, f.repo)}`);
+  }
+  return problems;
 }
 
 /**
@@ -26,7 +72,7 @@ export interface Move {
  * a planned move. Until the transfer the site of the repository has the old path, so GitHub Pages serves it and not these pages.
  * At the transfer these pages take over at once. The card, the links and the sitemap use the new address only after the day of the move.
  */
-export const moves: readonly Move[] = [
+export const writtenMoves: readonly Move[] = [
   { repo: "codeatlas", to: "https://metrograph-labs.github.io/codeatlas/", movedAt: "2026-11-17" },
   // Forms and checkers open the three texts pages directly, so each gets a page with the status 200.
   { repo: "alerts", to: "https://metrograph-labs.github.io/alerts/", movedAt: "2026-11-17", paths: ["texts/opt-in/", "texts/privacy/", "texts/terms/"] },
@@ -41,6 +87,9 @@ export const moves: readonly Move[] = [
   { repo: "vex", to: "https://metrograph-labs.github.io/vex/", movedAt: "2026-11-24" },
 ];
 
+/** The written moves, and a move for each site that the discovery finds at another owner. */
+export const moves: readonly Move[] = withFound(writtenMoves, discovered);
+
 /**
  * This function gives the move of a path on this domain, or undefined. The path `/<repo>` and each path under `/<repo>/` match.
  * The match ignores the case of the letters, as GitHub Pages does for the name of a repository.
@@ -53,10 +102,13 @@ export function moveOf(path: string, list: readonly Move[] = moves): Move | unde
   });
 }
 
-/** This function gives the move of a path that GitHub did, or undefined. A planned move gives undefined: the site is still at the path. */
+/**
+ * This function gives the move of a path that GitHub did, or undefined: a move with a day, or one that the discovery found.
+ * A planned move gives undefined: the site is still at the path.
+ */
 export function movedOf(path: string, list: readonly Move[] = moves): Move | undefined {
   const move = moveOf(path, list);
-  return move?.movedAt === undefined ? undefined : move;
+  return move?.movedAt === undefined && move?.found !== true ? undefined : move;
 }
 
 /** This function gives the address to load for a path of this domain: the new address of a moved site, or the path. */
