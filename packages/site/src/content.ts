@@ -504,6 +504,18 @@ export const curated: readonly Site[] = [
   },
   {
     kind: "site",
+    id: "package-id",
+    name: "package-id",
+    path: "/package-id/",
+    tagline: "Package URLs as plain functions",
+    blurb: "Package URLs (purl) as plain TypeScript functions, with no fetch. It parses a purl, writes its canonical text and applies the case rules of each type. It also maps each OSV ecosystem name to its purl type. Version ranges and the version order of each ecosystem are the next parts. The first version is 0.0.1, and it is not on npm yet. The site shows the install line and the status of the work.",
+    hue: "#E9967A",
+    tier: 2,
+    focus: "#install",
+    repo: `${github}/package-id`,
+  },
+  {
+    kind: "site",
     id: "pr-opener",
     name: "pr-opener",
     path: "/pr-opener/",
